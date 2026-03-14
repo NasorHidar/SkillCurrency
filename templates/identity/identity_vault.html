@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Vault</title>
+    <style>
+        :root {
+            --bg-color: #faf5ff; /* Very pale purple mist */
+            --primary-accent: #a855f7; /* Vibrant Purple */
+            --text-color: #3b0764; /* Deep Indigo/Violet */
+            --white: #ffffff;
+            --input-border: #e9d5ff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--white);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.15);
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h2 { color: var(--text-color); margin: 0; font-size: 28px; }
+        .header p { font-size: 14px; color: #6b7280; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab {
+            flex: 1; text-align: center; padding: 12px; cursor: pointer;
+            border-radius: 8px; font-weight: bold; border: 1px solid var(--input-border);
+            color: var(--text-color); background: var(--bg-color);
+        }
+        .tab.active { background-color: var(--white); color: var(--primary-accent); border-color: var(--primary-accent); }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
+        .form-control {
+            width: 100%; padding: 12px; border: 1px solid var(--input-border);
+            border-radius: 8px; box-sizing: border-box; color: var(--text-color); background: var(--bg-color);
+        }
+
+        .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .upload-box {
+            border: 2px dashed var(--input-border); 
+            border-radius: 8px; 
+            text-align: center; 
+            cursor: pointer; 
+            color: var(--primary-accent); 
+            font-weight: bold; 
+            font-size: 14px;
+            /* New rules for centering and fixing the height */
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Keeps the whole ID visible */
+            border-radius: 6px;
+            display: none; /* Hidden until an image is uploaded */
+        }
+
+        .btn-submit {
+            width: 100%; padding: 15px; background-color: #cbd5e1; color: var(--white);
+            border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: not-allowed;
+        }
+        .btn-submit.active { background-color: var(--primary-accent); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Identity Details</h2>
+        <p>Enter your details exactly as they appear on your ID.</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <input type="hidden" name="id_type" id="id_type_input" value="NID">
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('NID', this)">National ID</div>
+            <div class="tab" onclick="switchTab('TIN', this)">Tax ID (TIN)</div>
+        </div>
+
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="full_name" class="form-control" placeholder="e.g. Nasor Hidar" required>
+        </div>
+
+        <div class="form-group">
+            <label id="id_number_label">NID Number</label>
+            <input type="text" name="id_number" class="form-control" placeholder="Enter 10 or 13 digit ID" required>
+        </div>
+
+        <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" name="date_of_birth" class="form-control" required>
+        </div>
+
+        <div class="upload-grid">
+            <label class="upload-box">
+                <div id="frontText">Front Side<br><small style="color:#6b7280; font-weight:normal;">Required</small></div>
+                <img id="frontPreview" class="preview-img" src="" alt="Front ID Preview">
+                <input type="file" name="front_side" accept="image/*" style="display: none;" required onchange="previewImage(event, 'frontPreview', 'frontText')">
+            </label>
+            
+            <label class="upload-box">
+                <div id="backText">Back Side<br><small style="color:#6b7280; font-weight:normal;">Required</small></div>
+                <img id="backPreview" class="preview-img" src="" alt="Back ID Preview">
+                <input type="file" name="back_side" accept="image/*" style="display: none;" required onchange="previewImage(event, 'backPreview', 'backText')">
+            </label>
+        </div>
+
+        <button type="submit" class="btn-submit active">Verify Identity</button>
+    </form>
+</div>
+
+<script>
+    function switchTab(type, element) {
+        // Update the hidden input for Django
+        document.getElementById('id_type_input').value = type;
+        
+        // Update the text label
+        if (type === 'NID') {
+            document.getElementById('id_number_label').innerText = 'NID Number';
+        } else {
+            document.getElementById('id_number_label').innerText = 'TIN Number';
+        }
+
+        // Move the active styling to the clicked tab
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        element.classList.add('active');
+    }
+    function previewImage(event, previewId, textId) {
+        const input = event.target;
+        const previewImage = document.getElementById(previewId);
+        const placeholderText = document.getElementById(textId);
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                // Set the image source to the uploaded file
+                previewImage.src = e.target.result;
+                // Show the image
+                previewImage.style.display = 'block';
+                // Hide the "Front Side Required" text
+                placeholderText.style.display = 'none';
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+
+</body>
+</html>
