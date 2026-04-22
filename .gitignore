@@ -5,6 +5,10 @@ __pycache__/
 *.pyo
 *.pyd
 *.so
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
 
 # ── Virtual Environment ──────────────────────────────────────
 venv/
