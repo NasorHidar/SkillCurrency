@@ -125,9 +125,16 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 import os
-# Setting the key directly for local testing based on your input. 
-# For production, keep it strictly in environment variables.
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDbVrzIulX7xi4lUKMlxLFj_ZElo6rhtjg')
+from dotenv import load_dotenv
+
+# Load variables from .env file (local development)
+# .env is in .gitignore and must NEVER be committed to git.
+load_dotenv()
+
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+if not GEMINI_API_KEY:
+    import warnings
+    warnings.warn("GEMINI_API_KEY is not set. AI assessments will not work.", stacklevel=2)
 
 # Custom user model
 AUTH_USER_MODEL = 'accounts.CustomUser'
