@@ -1,0 +1,43 @@
+{% comment %}
+  Universal Back Button — Usage:
+    {% include 'accounts/_back_button.html' %}                      (JS history.back)
+    {% include 'accounts/_back_button.html' with href=url_name %}   (named URL string)
+{% endcomment %}
+<div class="back-btn-wrap">
+    {% if href %}
+        <a href="{{ href }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    {% else %}
+        <button onclick="history.back()" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back
+        </button>
+    {% endif %}
+</div>
+
+<style>
+.back-btn-wrap { margin-bottom: 1.5rem; }
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: #fff !important;
+    border: none;
+    padding: 0.55rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    font-family: inherit;
+}
+.back-btn:hover {
+    transform: translateX(-3px);
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.4);
+    background: linear-gradient(135deg, #6d28d9, #9333ea);
+}
+.back-btn i { font-size: 0.8rem; }
+</style>
