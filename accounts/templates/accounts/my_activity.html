@@ -20,6 +20,27 @@
             <h2 style="color: #3b0764;">My Dashboard</h2>
         </div>
 
+        {% if client_agreements %}
+            <div class="activity-section mb-5">
+                <h3 style="color: #3b0764;"><i class="fas fa-handshake"></i> Active Contracts (As Client)</h3>
+                <div class="job-grid">
+                    {% for ag in client_agreements %}
+                        <div class="job-card" style="border-left: 5px solid #a855f7;">
+                            <div class="job-card-header">
+                                <span class="status-pill status-progress">{{ ag.status }}</span>
+                                <span class="text-xs text-gray">Started {{ ag.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <h3 class="job-title"><a href="{% url 'workspace' ag.id %}">{{ ag.proposal.job.title }}</a></h3>
+                            <p class="text-sm mt-1">Provider: <strong>{{ ag.provider.username }}</strong></p>
+                            <div class="job-card-footer mt-3">
+                                <a href="{% url 'workspace' ag.id %}" class="btn btn-purple btn-sm">Enter Workspace</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
         {% if user.role != 'Skilled' %}
             <div class="activity-section mb-5">
                 <h3 style="color: #3b0764;">Jobs I've Posted ({{ posted_jobs.count }})</h3>
@@ -96,6 +117,27 @@
                         </div>
                     {% empty %}
                         <p class="text-sm text-gray">You haven't posted any jobs yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if provider_agreements %}
+            <div class="activity-section mb-5">
+                <h3 style="color: #3b0764;"><i class="fas fa-tools"></i> Ongoing Work (As Provider)</h3>
+                <div class="job-grid">
+                    {% for ag in provider_agreements %}
+                        <div class="job-card" style="border-left: 5px solid #16a34a;">
+                            <div class="job-card-header">
+                                <span class="status-pill status-progress">{{ ag.status }}</span>
+                                <span class="text-xs text-gray">Started {{ ag.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <h3 class="job-title"><a href="{% url 'workspace' ag.id %}">{{ ag.proposal.job.title }}</a></h3>
+                            <p class="text-sm mt-1">Client: <strong>{{ ag.client.username }}</strong></p>
+                            <div class="job-card-footer mt-3">
+                                <a href="{% url 'workspace' ag.id %}" class="btn btn-purple btn-sm">Enter Workspace</a>
+                            </div>
+                        </div>
                     {% endfor %}
                 </div>
             </div>

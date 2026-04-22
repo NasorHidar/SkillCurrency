@@ -468,9 +468,16 @@ def my_activity(request):
     posted_jobs = request.user.posted_jobs.all().order_by('-created_at')
     submitted_proposals = request.user.submitted_proposals.all().order_by('-created_at')
     
+    # Agreements as Client
+    client_agreements = ServiceAgreement.objects.filter(client=request.user).order_by('-created_at')
+    # Agreements as Provider (Skilled user)
+    provider_agreements = ServiceAgreement.objects.filter(provider=request.user).order_by('-created_at')
+    
     return render(request, 'accounts/my_activity.html', {
         'posted_jobs': posted_jobs,
-        'submitted_proposals': submitted_proposals
+        'submitted_proposals': submitted_proposals,
+        'client_agreements': client_agreements,
+        'provider_agreements': provider_agreements
     })
 
 @login_required
@@ -514,7 +521,7 @@ def accept_proposal(request, proposal_id):
         create_notification(
             user=proposal.applicant,
             message=f"{request.user.username} accepted your proposal for '{job.title}'!",
-            link=f"/accounts/workspace/{agreement.id}/"
+            link=f"/workspace/{agreement.id}/"
         )
         
         messages.success(request, f"You have accepted {proposal.applicant.username}'s proposal! Workspace created.")
@@ -565,7 +572,7 @@ def bulk_accept_proposals(request, job_id):
                 create_notification(
                     user=proposal.applicant,
                     message=acceptance_message,
-                    link=f"/accounts/workspace/{agreement.id}/"
+                    link=f"/workspace/{agreement.id}/"
                 )
                 
                 accepted_count += 1
@@ -623,8 +630,12 @@ def update_milestone(request, milestone_id):
         new_status = request.POST.get('status')
         if new_status in dict(Milestone.STATUS_CHOICES):
             
-            # Settlement Logic when completed by client
-            if new_status == 'Completed' and milestone.status != 'Completed' and request.user == agreement.client:
+            # Settlement Logic: ONLY client can set to Completed
+            if new_status == 'Completed' and milestone.status != 'Completed':
+                if request.user != agreement.client:
+                    messages.error(request, "Only the client can mark a milestone as Completed to release payment.")
+                    return redirect('workspace', agreement_id=agreement.id)
+                
                 from django.db import transaction as db_transaction
                 from django.db.models import F
                 import uuid
@@ -679,7 +690,7 @@ def update_milestone(request, milestone_id):
                         create_notification(
                             user=provider,
                             message=f"Milestone '{milestone.title}' completed. ${amount} added to your wallet!",
-                            link=f"/accounts/financial-hub/"
+                            link=f"/financial-hub/"
                         )
                         
                         messages.success(request, f"Milestone '{milestone.title}' completed and ${amount} settled securely.")
@@ -689,6 +700,21 @@ def update_milestone(request, milestone_id):
             else:
                 milestone.status = new_status
                 milestone.save()
+                
+                # Notify relevant party
+                if new_status == 'In Review' and request.user == agreement.provider:
+                    create_notification(
+                        user=agreement.client,
+                        message=f"Review requested: {agreement.provider.username} submitted work for '{milestone.title}'",
+                        link=f"/workspace/{agreement.id}/"
+                    )
+                elif new_status == 'In Progress' and request.user == agreement.client:
+                    create_notification(
+                        user=agreement.provider,
+                        message=f"Milestone Started: {agreement.client.username} set '{milestone.title}' to In Progress.",
+                        link=f"/workspace/{agreement.id}/"
+                    )
+                
                 messages.success(request, f"Milestone '{milestone.title}' updated to {new_status}.")
             
     return redirect('workspace', agreement_id=agreement.id)

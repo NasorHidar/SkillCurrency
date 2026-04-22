@@ -1,75 +1,176 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
-
-{% block title %}Workspace - {{ agreement.proposal.job.title }}{% endblock %}
-
+{% block title %}Workspace: {{ agreement.proposal.job.title }} – SkillCurrency{% endblock %}
 {% block content %}
-<div class="workspace-layout">
-    <div class="workspace-sidebar">
-        <div class="workspace-header">
-            <h3>{{ agreement.proposal.job.title }}</h3>
-            <p class="text-sm">Client: {{ agreement.client.username }} | Provider: {{ agreement.provider.username }}</p>
-            <span class="status-pill status-progress">{{ agreement.status }}</span>
+<style>
+.ws-wrap{min-height:92vh;background:#fcfaff;display:grid;grid-template-columns:380px 1fr;gap:0;position:relative;}
+.ws-sidebar{background:#fff;border-right:1px solid #f0e7ff;padding:2rem;display:flex;flex-direction:column;gap:2rem;overflow-y:auto;max-height:92vh;}
+.ws-main{padding:2rem 3rem;background:#fcfaff;display:flex;flex-direction:column;gap:2rem;max-height:92vh;overflow:hidden;}
+
+/* Sidebar Components */
+.ws-header-card{background:linear-gradient(135deg,#3b0764,#1a0038);border-radius:20px;padding:1.5rem;color:#fff;box-shadow:0 10px 25px rgba(59,7,100,0.15);}
+.ws-header-card h2{font-size:1.2rem;font-weight:800;margin-bottom:0.5rem;line-height:1.3;}
+.ws-header-card .role-info{font-size:0.8rem;color:#c4b5fd;display:flex;flex-direction:column;gap:0.25rem;}
+.ws-header-card .role-info strong{color:#fff;}
+
+.ms-section-title{font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;color:#a855f7;font-weight:800;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;}
+
+.ms-card{background:#faf5ff;border:1.5px solid #f3e8ff;border-radius:16px;padding:1.25rem;transition:0.2s;position:relative;}
+.ms-card:hover{border-color:#d8b4fe;background:#fff;box-shadow:0 4px 15px rgba(168,85,247,0.08);}
+.ms-status-tag{font-size:0.65rem;font-weight:800;text-transform:uppercase;padding:0.25rem 0.6rem;border-radius:20px;position:absolute;top:1rem;right:1rem;}
+.status-pending{background:#f3f4f6;color:#4b5563;}
+.status-in-progress{background:#e0e7ff;color:#4338ca;}
+.status-in-review{background:#fef9c3;color:#a16207;}
+.status-completed{background:#dcfce7;color:#15803d;}
+
+.ms-card h4{font-size:0.95rem;font-weight:700;color:#1f0045;margin-bottom:0.5rem;padding-right:4rem;}
+.ms-card p{font-size:0.8rem;color:#6b7280;line-height:1.5;}
+.ms-card .ms-footer{margin-top:1rem;display:flex;justify-content:space-between;align-items:center;}
+.ms-card .ms-amt{font-weight:800;color:#7c3aed;font-size:0.9rem;}
+
+/* Role Action Buttons */
+.ws-btn{border:none;padding:0.6rem 1rem;border-radius:10px;font-size:0.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:0.5rem;transition:0.2s;}
+.ws-btn-purple{background:#7c3aed;color:#fff;}
+.ws-btn-purple:hover{background:#6d28d9;transform:translateY(-2px);}
+.ws-btn-outline{background:#fff;border:1.5px solid #e9d5ff;color:#7c3aed;}
+.ws-btn-outline:hover{background:#f3e8ff;}
+
+/* Chat Area */
+.chat-container{background:#fff;border-radius:24px;border:1.5px solid #f0e7ff;display:flex;flex-direction:column;flex:1;overflow:hidden;box-shadow:0 4px 25px rgba(0,0,0,0.03);}
+.chat-header{padding:1.25rem 2rem;border-bottom:1px solid #f0e7ff;display:flex;justify-content:space-between;align-items:center;}
+.chat-header h3{font-size:1.1rem;font-weight:800;color:#1f0045;display:flex;align-items:center;gap:0.75rem;}
+.chat-header h3 i{color:#22c55e;font-size:0.9rem;}
+
+.chat-messages{padding:2rem;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1.5rem;background:linear-gradient(180deg,#fff 0%,#fafaff 100%);}
+.msg-row{display:flex;flex-direction:column;max-width:75%;}
+.msg-self{align-self:flex-end;align-items:flex-end;}
+.msg-other{align-self:flex-start;align-items:flex-start;}
+
+.msg-bubble{padding:1rem 1.25rem;border-radius:18px;font-size:0.9rem;line-height:1.5;position:relative;}
+.msg-self .msg-bubble{background:#7c3aed;color:#fff;border-bottom-right-radius:4px;}
+.msg-other .msg-bubble{background:#f3f4f6;color:#1f0045;border-bottom-left-radius:4px;}
+.msg-meta{font-size:0.7rem;color:#9ca3af;margin-top:0.4rem;font-weight:600;}
+
+.chat-input-row{padding:1.5rem 2rem;background:#fff;border-top:1px solid #f0e7ff;display:flex;gap:1rem;align-items:center;}
+.chat-input{flex:1;border:1.5px solid #e9d5ff;border-radius:14px;padding:0.8rem 1.25rem;outline:none;font-size:0.95rem;transition:0.2s;}
+.chat-input:focus{border-color:#a855f7;box-shadow:0 0 0 4px rgba(168,85,247,0.1);}
+.chat-send-btn{width:48px;height:48px;border-radius:14px;background:#7c3aed;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:0.2s;}
+.chat-send-btn:hover{background:#6d28d9;transform:scale(1.05);}
+
+@media(max-width:1000px){.ws-wrap{grid-template-columns:1fr;}.ws-sidebar{max-height:none;border-right:none;border-bottom:1px solid #f0e7ff;}}
+</style>
+
+<div class="ws-wrap">
+    <!-- SIDEBAR: Project Info & Milestones -->
+    <div class="ws-sidebar">
+        <div class="ws-header-card">
+            <h2>{{ agreement.proposal.job.title }}</h2>
+            <div class="role-info">
+                <span>Client: <strong>{{ agreement.client.username }}</strong></span>
+                <span>Provider: <strong>{{ agreement.provider.username }}</strong></span>
+            </div>
+            <div style="margin-top:1.25rem;">
+                <span style="font-size:0.65rem;text-transform:uppercase;font-weight:800;opacity:0.8;">Agreement Status</span>
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:#22c55e;"></div>
+                    <span style="font-weight:700;font-size:0.9rem;">{{ agreement.status }}</span>
+                </div>
+            </div>
         </div>
 
-        <div class="milestones-section mt-4">
-            <h4>Milestones</h4>
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-success p-2 text-sm">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-            
-            <div class="milestone-list">
+        <div>
+            <div class="ms-section-title"><i class="fas fa-tasks"></i> Project Milestones</div>
+            <div style="display:flex;flex-direction:column;gap:1rem;">
                 {% for ms in milestones %}
-                    <div class="milestone-card">
-                        <div class="ms-header">
-                            <h5>{{ ms.title }}</h5>
-                            <span class="ms-status ms-{{ ms.status|slugify }}">{{ ms.status }}</span>
-                        </div>
-                        <p class="text-sm mt-1">{{ ms.description }}</p>
-                        <p class="text-xs text-gray mt-1">Value: ${{ ms.amount }}</p>
+                <div class="ms-card">
+                    <span class="ms-status-tag status-{{ ms.status|slugify }}">{{ ms.status }}</span>
+                    <h4>{{ ms.title }}</h4>
+                    <p>{{ ms.description }}</p>
+                    <div class="ms-footer">
+                        <span class="ms-amt">${{ ms.amount }}</span>
                         
-                        <form method="POST" action="{% url 'update_milestone' ms.id %}" class="mt-2" style="display: flex; gap: 5px;">
-                            {% csrf_token %}
-                            <select name="status" class="form-control text-xs p-1" style="flex: 1;">
-                                <option value="Pending" {% if ms.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                <option value="In Progress" {% if ms.status == 'In Progress' %}selected{% endif %}>In Progress</option>
-                                <option value="In Review" {% if ms.status == 'In Review' %}selected{% endif %}>In Review</option>
-                                <option value="Completed" {% if ms.status == 'Completed' %}selected{% endif %}>Completed</option>
-                            </select>
-                            <button type="submit" class="btn btn-purple btn-sm">Update</button>
-                        </form>
+                        <div class="ms-actions">
+                            {% if ms.status != 'Completed' %}
+                                {% if user == agreement.provider %}
+                                    <!-- PROVIDER ACTIONS -->
+                                    {% if ms.status == 'Pending' or ms.status == 'In Progress' %}
+                                        <form method="POST" action="{% url 'update_milestone' ms.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="In Review">
+                                            <button type="submit" class="ws-btn ws-btn-purple"><i class="fas fa-paper-plane"></i> Submit Work</button>
+                                        </form>
+                                    {% elif ms.status == 'In Review' %}
+                                        <span class="text-xs text-gray" style="font-style:italic;">Awaiting Client Review...</span>
+                                    {% endif %}
+
+                                {% elif user == agreement.client %}
+                                    <!-- CLIENT ACTIONS -->
+                                    {% if ms.status == 'In Review' %}
+                                        <form method="POST" action="{% url 'update_milestone' ms.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="Completed">
+                                            <button type="submit" class="ws-btn ws-btn-purple"><i class="fas fa-check-circle"></i> Approve & Pay</button>
+                                        </form>
+                                    {% elif ms.status == 'Pending' %}
+                                        <form method="POST" action="{% url 'update_milestone' ms.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="In Progress">
+                                            <button type="submit" class="ws-btn ws-btn-outline">Start Milestone</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <span class="text-xs text-green" style="font-weight:700;"><i class="fas fa-shield-check"></i> Milestone Settled</span>
+                            {% endif %}
+                        </div>
                     </div>
+                </div>
                 {% empty %}
-                    <p class="text-sm">No milestones created yet.</p>
+                <p class="text-sm text-gray">No milestones found.</p>
                 {% endfor %}
             </div>
         </div>
     </div>
 
-    <div class="workspace-main">
-        <div class="chat-header">
-            <h4><i class="fas fa-lock text-green"></i> Encrypted Message Center</h4>
-            <span class="text-xs text-gray">End-to-End Encrypted</span>
-        </div>
-        
-        <div class="chat-window" id="chat-log">
-            {% for msg in chat_history %}
-                <div class="chat-message {% if msg.sender == user.username %}msg-self{% else %}msg-other{% endif %}">
+    <!-- MAIN: Communication Center -->
+    <div class="ws-main">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h3><i class="fas fa-shield-alt"></i> Secure Workspace Chat</h3>
+                <div style="display:flex;align-items:center;gap:1.5rem;">
+                    <div style="text-align:right;">
+                        <span style="display:block;font-size:0.7rem;text-transform:uppercase;color:#9ca3af;font-weight:800;">Encryption</span>
+                        <span style="font-size:0.8rem;color:#15803d;font-weight:700;">AES-256 Active</span>
+                    </div>
+                    <i class="fas fa-ellipsis-v" style="color:#d1d5db;cursor:pointer;"></i>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chat-log">
+                {% for msg in chat_history %}
+                <div class="msg-row {% if msg.sender == user.username %}msg-self{% else %}msg-other{% endif %}">
                     <div class="msg-bubble">
-                        <div class="msg-sender">{{ msg.sender }}</div>
-                        <div class="msg-text">{{ msg.text }}</div>
-                        <div class="msg-time">{{ msg.timestamp|time:"H:i" }}</div>
+                        {{ msg.text }}
+                    </div>
+                    <div class="msg-meta">
+                        {% if msg.sender != user.username %}{{ msg.sender }} • {% endif %}{{ msg.timestamp|time:"h:i A" }}
                     </div>
                 </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
+
+            <div class="chat-input-row">
+                <input type="text" id="chat-message-input" class="chat-input" placeholder="Discuss project details securely...">
+                <button id="chat-message-submit" class="chat-send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
         
-        <div class="chat-input-area">
-            <input type="text" id="chat-message-input" class="form-control" placeholder="Type a secure message...">
-            <button id="chat-message-submit" class="btn btn-purple"><i class="fas fa-paper-plane"></i> Send</button>
-        </div>
+        <p style="text-align:center;font-size:0.75rem;color:#9ca3af;">
+            <i class="fas fa-info-circle"></i> Work within this workspace is protected by SkillCurrency Escrow. 
+            <a href="#" style="color:#7c3aed;text-decoration:none;font-weight:700;">Learn More</a>
+        </p>
     </div>
 </div>
 
@@ -81,27 +182,24 @@
     );
 
     const chatLog = document.querySelector('#chat-log');
-    chatLog.scrollTop = chatLog.scrollHeight; // Scroll to bottom initially
+    chatLog.scrollTop = chatLog.scrollHeight;
 
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
         const isSelf = data.username === "{{ user.username }}";
         
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `chat-message ${isSelf ? 'msg-self' : 'msg-other'}`;
+        const msgRow = document.createElement('div');
+        msgRow.className = `msg-row ${isSelf ? 'msg-self' : 'msg-other'}`;
         
         const now = new Date();
-        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
-        msgDiv.innerHTML = `
-            <div class="msg-bubble">
-                <div class="msg-sender">${data.username}</div>
-                <div class="msg-text">${data.message}</div>
-                <div class="msg-time">${timeStr}</div>
-            </div>
+        msgRow.innerHTML = `
+            <div class="msg-bubble">${data.message}</div>
+            <div class="msg-meta">${isSelf ? '' : data.username + ' • '}${timeStr}</div>
         `;
         
-        chatLog.appendChild(msgDiv);
+        chatLog.appendChild(msgRow);
         chatLog.scrollTop = chatLog.scrollHeight;
     };
 
@@ -111,7 +209,7 @@
 
     document.querySelector('#chat-message-input').focus();
     document.querySelector('#chat-message-input').onkeyup = function(e) {
-        if (e.keyCode === 13) {  // enter, return
+        if (e.keyCode === 13) {
             document.querySelector('#chat-message-submit').click();
         }
     };
