@@ -21,6 +21,8 @@ class CustomUser(AbstractUser):
     nid_tin_number = models.CharField(max_length=50, blank=True, null=True)
     is_identity_verified = models.BooleanField(default=False)
     wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    rating = models.DecimalField(max_digits=3, decimal_places=1, default=4.9) # Mock default for search
+
     
     id_document = models.FileField(upload_to='identity_docs/', blank=True, null=True)
     verification_status = models.CharField(max_length=20, choices=VERIFICATION_CHOICES, default='Unverified')
@@ -106,6 +108,7 @@ class JobProposal(models.Model):
     job = models.ForeignKey(JobPost, on_delete=models.CASCADE, related_name='proposals')
     applicant = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='submitted_proposals')
     cover_letter = models.TextField()
+    cv_file = models.FileField(upload_to='cvs/', blank=True, null=True)
     proposed_terms = models.CharField(max_length=255)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)

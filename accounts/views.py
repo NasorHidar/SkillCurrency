@@ -406,9 +406,14 @@ def job_detail(request, job_id):
     if request.user.is_authenticated and request.user == job.author:
         proposals = job.proposals.all().order_by('-created_at')
         
+    user_has_proposed = False
+    if request.user.is_authenticated and request.user != job.author:
+        user_has_proposed = JobProposal.objects.filter(job=job, applicant=request.user).exists()
+        
     return render(request, 'accounts/job_detail.html', {
         'job': job,
-        'proposals': proposals
+        'proposals': proposals,
+        'user_has_proposed': user_has_proposed
     })
 
 @login_required
@@ -435,19 +440,22 @@ def submit_proposal(request, job_id):
     if request.method == 'POST':
         cover_letter = request.POST.get('cover_letter')
         proposed_terms = request.POST.get('proposed_terms')
+        cv_file = request.FILES.get('cv_file')
         
         JobProposal.objects.create(
             job=job,
             applicant=request.user,
             cover_letter=cover_letter,
-            proposed_terms=proposed_terms
+            proposed_terms=proposed_terms,
+            cv_file=cv_file
         )
         
+        from django.urls import reverse
         # Notify Job Author
         create_notification(
             user=job.author,
             message=f"{request.user.username} submitted a proposal for '{job.title}'",
-            link=f"/accounts/job/{job.id}/"
+            link=reverse('my_activity')
         )
         
         messages.success(request, "Your proposal has been submitted!")
@@ -513,6 +521,67 @@ def accept_proposal(request, proposal_id):
         return redirect('workspace', agreement_id=agreement.id)
         
     return redirect('job_detail', job_id=job.id)
+
+@login_required
+def bulk_accept_proposals(request, job_id):
+    job = get_object_or_404(JobPost, id=job_id)
+    
+    if request.user != job.author:
+        messages.error(request, "Only the job author can accept proposals.")
+        return redirect('my_activity')
+        
+    if request.method == 'POST':
+        proposal_ids = request.POST.getlist('proposal_ids')
+        acceptance_message = request.POST.get('acceptance_message', "Congratulations! I am accepting your proposal.")
+        
+        if not proposal_ids:
+            messages.warning(request, "No applicants selected.")
+            return redirect('my_activity')
+            
+        accepted_count = 0
+        for pid in proposal_ids:
+            try:
+                proposal = JobProposal.objects.get(id=pid, job=job, status='Pending')
+                proposal.status = 'Accepted'
+                proposal.save()
+                
+                # Create Service Agreement
+                agreement = ServiceAgreement.objects.create(
+                    proposal=proposal,
+                    client=job.author,
+                    provider=proposal.applicant
+                )
+                
+                # Create initial Milestone
+                Milestone.objects.create(
+                    agreement=agreement,
+                    title='Initial Setup & Planning',
+                    description='Agree on terms and begin work.',
+                    amount=0.00,
+                    status='In Progress'
+                )
+                
+                # Notify Provider
+                create_notification(
+                    user=proposal.applicant,
+                    message=acceptance_message,
+                    link=f"/accounts/workspace/{agreement.id}/"
+                )
+                
+                accepted_count += 1
+            except JobProposal.DoesNotExist:
+                pass
+                
+        if accepted_count > 0:
+            job.status = 'In Progress'
+            job.save()
+            
+            # Reject remaining pending proposals
+            JobProposal.objects.filter(job=job, status='Pending').update(status='Rejected')
+            
+            messages.success(request, f"Successfully accepted {accepted_count} applicant(s). Workspaces created.")
+        
+    return redirect('my_activity')
 
 @login_required
 def workspace(request, agreement_id):

@@ -21,6 +21,7 @@ urlpatterns = [
     path('marketplace/job/<int:job_id>/', views.job_detail, name='job_detail'),
     path('marketplace/job/<int:job_id>/propose/', views.submit_proposal, name='submit_proposal'),
     path('marketplace/proposal/<int:proposal_id>/accept/', views.accept_proposal, name='accept_proposal'),
+    path('marketplace/job/<int:job_id>/bulk-accept/', views.bulk_accept_proposals, name='bulk_accept_proposals'),
     path('marketplace/activity/', views.my_activity, name='my_activity'),
     
     # Workspace URLs

@@ -26,10 +26,9 @@
         </nav>
         <div class="auth-nav">
             {% if user.is_authenticated %}
-                <form action="{% url 'search_users' %}" method="GET" class="header-user-search">
-                    <i class="fas fa-search"></i>
-                    <input type="text" name="q" placeholder="Search users..." required>
-                </form>
+                <a href="{% url 'search_users' %}" class="btn icon-btn" title="Search User" style="background: none; color: #6b7280; padding: 0.5rem; display: flex; align-items: center; gap: 0.3rem; text-decoration: none;">
+                    <i class="fas fa-search"></i> <span style="font-size: 0.85rem; font-weight: 500;">Search User</span>
+                </a>
 
                 <div class="nav-item notification-dropdown">
                     <a href="#" class="nav-link bell-icon" id="notif-toggle">

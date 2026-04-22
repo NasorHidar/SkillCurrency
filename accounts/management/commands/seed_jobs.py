@@ -263,17 +263,20 @@ class Command(BaseCommand):
         # We'll use the first superuser, or create a dedicated seed user.
         author = User.objects.filter(is_superuser=True).first()
         if not author:
-            self.stdout.write(self.style.WARNING(
-                'No superuser found. Creating a seed author account: seed_admin / seed_pass_123'
-            ))
-            author = User.objects.create_user(
+            author, created = User.objects.get_or_create(
                 username='seed_admin',
-                password='seed_pass_123',
-                email='seed@skillcurrency.dev',
-                role='Buyer',
-                is_staff=True,
+                defaults={
+                    'email': 'seed@skillcurrency.dev',
+                    'role': 'Buyer',
+                    'is_staff': True,
+                }
             )
-            self.stdout.write(self.style.SUCCESS(f'Created seed user: {author.username}'))
+            if created:
+                author.set_password('seed_pass_123')
+                author.save()
+                self.stdout.write(self.style.SUCCESS(f'Created seed user: {author.username}'))
+            else:
+                self.stdout.write(self.style.WARNING(f'Using existing seed user: {author.username}'))
 
         created_count = 0
         skipped_count = 0
