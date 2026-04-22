@@ -1,0 +1,425 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% block title %}Job Marketplace – SkillCurrency{% endblock %}
+
+{% block content %}
+<style>
+/* ── MARKETPLACE V3 ─────────────────────────────────── */
+.mp-wrap { min-height: 100vh; background: #f8f3ff; }
+
+/* ── Hero Banner ── */
+.mp-hero {
+  background: linear-gradient(135deg, #1a0038 0%, #3b0764 50%, #7c3aed 100%);
+  padding: 3rem 5%; position: relative; overflow: hidden;
+}
+.mp-hero::after {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(168,85,247,.25), transparent 65%);
+  pointer-events:none;
+}
+.mp-hero-inner { max-width: 900px; z-index:1; position:relative; }
+.mp-hero-tag {
+  display:inline-flex; align-items:center; gap:.4rem;
+  background:rgba(168,85,247,.3); border:1px solid rgba(168,85,247,.5);
+  color:#e9d5ff; font-size:.75rem; font-weight:600; letter-spacing:.07em;
+  text-transform:uppercase; padding:.3rem .8rem; border-radius:20px; margin-bottom:1rem;
+}
+.mp-hero h1 { font-size:clamp(1.6rem,3.5vw,2.6rem); font-weight:800; color:#fff; margin-bottom:.5rem; }
+.mp-hero p { color:#c4b5fd; font-size:1rem; margin-bottom:1.5rem; max-width:520px; }
+
+/* Search */
+.mp-search-bar {
+  display:flex; align-items:center; background:#fff; border-radius:14px;
+  box-shadow:0 8px 30px rgba(0,0,0,.25); overflow:hidden; max-width:640px;
+}
+.mp-search-bar i { padding:0 1rem; color:#a855f7; font-size:1rem; flex-shrink:0; }
+.mp-search-bar input {
+  flex:1; border:none; outline:none; padding:.9rem 0; font-size:.95rem;
+  font-family:inherit; background:transparent; color:#1f0045;
+}
+.mp-search-bar input::placeholder { color:#9ca3af; }
+.mp-search-btn {
+  background:linear-gradient(135deg,#a855f7,#7c3aed); color:#fff; border:none;
+  padding:.9rem 1.75rem; font-weight:700; font-size:.9rem; cursor:pointer;
+  transition:.2s; font-family:inherit; white-space:nowrap;
+}
+.mp-search-btn:hover { background:linear-gradient(135deg,#9333ea,#6d28d9); }
+.mp-search-clear { padding:0 .75rem; color:#9ca3af; text-decoration:none; font-size:1rem; }
+
+/* ── Layout ── */
+.mp-layout {
+  display: grid; grid-template-columns: 270px 1fr;
+  gap: 1.75rem; max-width: 1400px; margin: 0 auto; padding: 2rem 5%;
+}
+
+/* ── Sidebar ── */
+.mp-sidebar { display:flex; flex-direction:column; gap:1rem; }
+.mp-widget {
+  background:#fff; border-radius:16px; padding:1.25rem 1.5rem;
+  border:1px solid #f0e7ff; box-shadow:0 2px 8px rgba(168,85,247,.06);
+}
+.mp-widget-title {
+  font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  color:#a855f7; margin-bottom:1rem; display:flex; align-items:center; gap:.5rem;
+}
+.mp-filter-select {
+  width:100%; border:1.5px solid #e9d5ff; border-radius:10px; padding:.65rem .9rem;
+  font-size:.88rem; color:#374151; background:#faf5ff; font-family:inherit;
+  outline:none; cursor:pointer; transition:.2s;
+}
+.mp-filter-select:focus { border-color:#a855f7; background:#fff; }
+
+/* Pill buttons */
+.mp-pills { display:flex; flex-direction:column; gap:.4rem; }
+.mp-pill {
+  display:flex; align-items:center; gap:.6rem; padding:.6rem .9rem;
+  border-radius:10px; font-size:.85rem; font-weight:500; color:#374151;
+  text-decoration:none; border:1.5px solid transparent; transition:all .15s;
+  background:#faf5ff;
+}
+.mp-pill:hover { background:#f3e8ff; border-color:#e9d5ff; color:#7c3aed; }
+.mp-pill.active { background:linear-gradient(135deg,#a855f7,#7c3aed); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(168,85,247,.3); }
+.mp-pill-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.dot-all   { background:#6b7280; }
+.dot-paid  { background:#16a34a; }
+.dot-barter{ background:#7c3aed; }
+.dot-low   { background:#0284c7; }
+.dot-mid   { background:#f97316; }
+.dot-high  { background:#dc2626; }
+.dot-bonly { background:#a855f7; }
+
+/* Smart match toggle */
+.mp-smart-toggle {
+  display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  padding:.8rem 1rem; border-radius:12px; text-decoration:none;
+  border:1.5px solid #e9d5ff; transition:all .2s;
+}
+.mp-smart-toggle.on  { background:linear-gradient(135deg,#fef9c3,#fef08a); border-color:#fbbf24; }
+.mp-smart-toggle.off { background:#faf5ff; }
+.mp-smart-label { font-size:.85rem; font-weight:600; color:#374151; }
+.mp-smart-toggle.on .mp-smart-label { color:#92400e; }
+.mp-toggle-track {
+  width:42px; height:24px; border-radius:12px; position:relative; flex-shrink:0;
+  transition:background .2s;
+}
+.on  .mp-toggle-track { background:#a855f7; }
+.off .mp-toggle-track { background:#d1d5db; }
+.mp-toggle-thumb {
+  width:18px; height:18px; background:#fff; border-radius:50%; position:absolute;
+  top:3px; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.on  .mp-toggle-thumb { left:21px; }
+.off .mp-toggle-thumb { left:3px; }
+
+.mp-sidebar-action {
+  display:flex; align-items:center; gap:.6rem; justify-content:center;
+  padding:.75rem 1rem; border-radius:12px; font-weight:600; font-size:.88rem;
+  text-decoration:none; transition:all .2s;
+}
+.mp-action-primary { background:linear-gradient(135deg,#a855f7,#7c3aed); color:#fff !important; box-shadow:0 4px 14px rgba(168,85,247,.3); }
+.mp-action-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(168,85,247,.4); }
+.mp-action-secondary { background:#f3e8ff; color:#7c3aed !important; border:1.5px solid #e9d5ff; }
+.mp-action-secondary:hover { background:#e9d5ff; }
+
+/* ── Main Feed ── */
+.mp-feed { min-width:0; }
+
+/* Feed header row */
+.mp-feed-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:1.25rem; flex-wrap:wrap; gap:.75rem;
+}
+.mp-feed-title {
+  display:flex; align-items:center; gap:.6rem;
+  font-size:1.05rem; font-weight:700; color:#1f0045;
+}
+.mp-feed-title i { color:#a855f7; }
+.mp-count-badge {
+  background:#f3e8ff; color:#7c3aed; font-size:.75rem; font-weight:700;
+  padding:.2rem .65rem; border-radius:20px;
+}
+.mp-sort-row { display:flex; align-items:center; gap:.5rem; }
+.mp-sort-select {
+  border:1.5px solid #e9d5ff; border-radius:8px; padding:.45rem .75rem;
+  font-size:.82rem; color:#374151; background:#fff; font-family:inherit; outline:none;
+}
+
+/* Active filters */
+.mp-active-filters {
+  display:flex; flex-wrap:wrap; align-items:center; gap:.5rem;
+  background:#fff; border:1px solid #f0e7ff; border-radius:12px;
+  padding:.75rem 1rem; margin-bottom:1.25rem;
+}
+.mp-af-label { font-size:.78rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.05em; }
+.mp-af-chip {
+  display:inline-flex; align-items:center; gap:.35rem;
+  background:#f3e8ff; color:#7c3aed; font-size:.78rem; font-weight:600;
+  padding:.25rem .65rem; border-radius:20px;
+}
+.mp-af-clear {
+  margin-left:auto; color:#ef4444; font-size:.8rem; font-weight:600;
+  text-decoration:none; display:flex; align-items:center; gap:.3rem;
+}
+.mp-af-clear:hover { color:#dc2626; }
+
+/* Smart match section */
+.mp-section-banner {
+  display:flex; align-items:center; gap:.75rem; padding:1rem 1.25rem;
+  border-radius:14px; margin-bottom:1.25rem; font-weight:700; font-size:.9rem;
+}
+.mp-banner-pref { background:linear-gradient(135deg,#fef9c3,#fef3c7); border:1.5px solid #fbbf24; color:#92400e; }
+.mp-banner-other { background:#f3f4f6; border:1.5px solid #e5e7eb; color:#374151; }
+.mp-banner-pref i { color:#f59e0b; }
+.mp-banner-other i { color:#6b7280; }
+
+/* ── Job Grid → 2-col ── */
+.mp-job-grid {
+  display:grid; grid-template-columns:repeat(2,1fr); gap:1.25rem;
+}
+
+/* ── Job Card V3 ── */
+.mp-job-card {
+  background:#fff; border-radius:18px; border:1.5px solid #f0e7ff;
+  padding:1.5rem; display:flex; flex-direction:column; gap:.9rem;
+  transition:all .25s; position:relative; overflow:hidden;
+}
+.mp-job-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,#a855f7,#ec4899); opacity:0; transition:.25s;
+}
+.mp-job-card:hover { transform:translateY(-4px); box-shadow:0 16px 45px rgba(168,85,247,.15); border-color:#d8b4fe; }
+.mp-job-card:hover::before { opacity:1; }
+.mp-job-card.is-highlight { border-color:#fbbf24; background:linear-gradient(135deg,#fffbeb,#fff); }
+.mp-job-card.is-highlight::before { background:linear-gradient(90deg,#f59e0b,#a855f7); opacity:1; }
+
+.mp-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
+.mp-card-badges { display:flex; flex-wrap:wrap; gap:.4rem; }
+.mc-badge {
+  display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem;
+  font-weight:700; padding:.2rem .6rem; border-radius:20px;
+}
+.mc-paid   { background:#dcfce7; color:#15803d; }
+.mc-barter { background:#ede9fe; color:#6d28d9; }
+.mc-cat    { background:#f3f4f6; color:#374151; }
+.mc-match  { background:linear-gradient(135deg,#fef9c3,#fef08a); color:#92400e; }
+
+.mp-card-author {
+  display:flex; align-items:center; gap:.4rem;
+  font-size:.75rem; color:#6b7280; flex-shrink:0;
+}
+.mp-author-avatar {
+  width:26px; height:26px; border-radius:50%;
+  background:linear-gradient(135deg,#a855f7,#7c3aed);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.65rem; font-weight:700; color:#fff; flex-shrink:0;
+}
+
+.mp-card-title { font-size:1rem; font-weight:700; color:#1f0045; margin:0; line-height:1.4; }
+.mp-card-title a { text-decoration:none; color:inherit; }
+.mp-card-title a:hover { color:#7c3aed; }
+.mp-card-desc { font-size:.85rem; color:#6b7280; line-height:1.6; flex:1; }
+
+.mp-card-bottom {
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:.75rem; border-top:1px solid #f3f4f6; gap:.5rem;
+}
+.mp-card-budget {
+  font-size:.9rem; font-weight:700; color:#7c3aed;
+  display:flex; align-items:center; gap:.35rem;
+}
+.mp-card-budget i { font-size:.75rem; color:#a855f7; }
+.mp-card-time { font-size:.75rem; color:#9ca3af; display:flex; align-items:center; gap:.3rem; }
+.mp-view-btn {
+  display:inline-flex; align-items:center; gap:.4rem; font-size:.82rem;
+  font-weight:600; padding:.5rem 1rem; border-radius:9px; text-decoration:none;
+  background:linear-gradient(135deg,#a855f7,#7c3aed); color:#fff !important;
+  transition:.2s; white-space:nowrap;
+}
+.mp-view-btn:hover { box-shadow:0 4px 14px rgba(168,85,247,.35); transform:translateY(-1px); }
+
+/* Empty state */
+.mp-empty {
+  grid-column:1/-1; text-align:center; padding:4rem 2rem;
+  background:#fff; border-radius:18px; border:1.5px dashed #e9d5ff;
+}
+.mp-empty i { font-size:3rem; color:#d8b4fe; margin-bottom:1rem; display:block; }
+.mp-empty h3 { font-size:1.1rem; color:#374151; margin-bottom:.5rem; }
+.mp-empty p { color:#9ca3af; font-size:.9rem; margin-bottom:1.25rem; }
+
+@media(max-width:1024px) { .mp-job-grid { grid-template-columns:1fr; } }
+@media(max-width:768px) {
+  .mp-layout { grid-template-columns:1fr; }
+  .mp-sidebar { flex-direction:row; flex-wrap:wrap; }
+  .mp-widget { flex:1; min-width:200px; }
+}
+</style>
+
+<div class="mp-wrap">
+
+  <!-- ── HERO ── -->
+  <div class="mp-hero">
+    <form method="GET" action="{% url 'marketplace_feed' %}" id="searchForm">
+      {% if selected_category %}<input type="hidden" name="category"        value="{{ selected_category }}">{% endif %}
+      {% if selected_type    %}<input type="hidden" name="interaction_type" value="{{ selected_type }}">{% endif %}
+      {% if budget_range     %}<input type="hidden" name="budget_range"     value="{{ budget_range }}">{% endif %}
+      {% if preference_mode  %}<input type="hidden" name="preference_mode"  value="{{ preference_mode }}">{% endif %}
+
+      <div class="mp-hero-inner">
+        <div class="mp-hero-tag"><i class="fas fa-briefcase"></i> Job Marketplace</div>
+        <h1>Find Your Next Opportunity</h1>
+        <p>Browse 20+ open jobs. Bid with skills, barter expertise, or get paid for what you know.</p>
+        <div class="mp-search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" name="q" placeholder="Search jobs, skills, or keywords…" value="{{ search_query }}" autocomplete="off">
+          {% if search_query %}<a href="{% url 'marketplace_feed' %}" class="mp-search-clear"><i class="fas fa-times"></i></a>{% endif %}
+          <button type="submit" class="mp-search-btn"><i class="fas fa-search"></i> Search</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── LAYOUT ── -->
+  <div class="mp-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="mp-sidebar">
+
+      {% if user.is_authenticated and user_skill_category_ids %}
+      <div class="mp-widget">
+        <div class="mp-widget-title"><i class="fas fa-star"></i> Smart Match</div>
+        {% if preference_mode == 'on' %}
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_type %}interaction_type={{ selected_type }}&{% endif %}{% if budget_range %}budget_range={{ budget_range }}&{% endif %}{% if search_query %}q={{ search_query }}{% endif %}" class="mp-smart-toggle on">
+        {% else %}
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_type %}interaction_type={{ selected_type }}&{% endif %}{% if budget_range %}budget_range={{ budget_range }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}preference_mode=on" class="mp-smart-toggle off">
+        {% endif %}
+          <span class="mp-smart-label">{% if preference_mode == 'on' %}✨ Preferences Active{% else %}Enable Smart Match{% endif %}</span>
+          <span class="mp-toggle-track"><span class="mp-toggle-thumb"></span></span>
+        </a>
+        <p style="font-size:.78rem;color:#9ca3af;margin-top:.6rem;">Shows jobs matching your verified skill badges first.</p>
+      </div>
+      {% endif %}
+
+      <!-- Category -->
+      <div class="mp-widget">
+        <div class="mp-widget-title"><i class="fas fa-folder-open"></i> Category</div>
+        <form method="GET" action="{% url 'marketplace_feed' %}" id="catForm">
+          {% if selected_type   %}<input type="hidden" name="interaction_type" value="{{ selected_type }}">{% endif %}
+          {% if budget_range    %}<input type="hidden" name="budget_range"     value="{{ budget_range }}">{% endif %}
+          {% if search_query    %}<input type="hidden" name="q"                value="{{ search_query }}">{% endif %}
+          {% if preference_mode %}<input type="hidden" name="preference_mode"  value="{{ preference_mode }}">{% endif %}
+          <select name="category" class="mp-filter-select" onchange="document.getElementById('catForm').submit()">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>
+                {{ cat.name }}{% if cat.id in user_skill_category_ids %} ★{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+
+      <!-- Type -->
+      <div class="mp-widget">
+        <div class="mp-widget-title"><i class="fas fa-exchange-alt"></i> Job Type</div>
+        <div class="mp-pills">
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_range %}budget_range={{ budget_range }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if preference_mode %}preference_mode={{ preference_mode }}{% endif %}" class="mp-pill {% if not selected_type %}active{% endif %}"><span class="mp-pill-dot dot-all"></span> All Types</a>
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_range %}budget_range={{ budget_range }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if preference_mode %}preference_mode={{ preference_mode }}&{% endif %}interaction_type=Paid+Service" class="mp-pill {% if selected_type == 'Paid Service' %}active{% endif %}"><span class="mp-pill-dot dot-paid"></span> 💰 Paid Service</a>
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_range %}budget_range={{ budget_range }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if preference_mode %}preference_mode={{ preference_mode }}&{% endif %}interaction_type=Skill+Barter" class="mp-pill {% if selected_type == 'Skill Barter' %}active{% endif %}"><span class="mp-pill-dot dot-barter"></span> 🔄 Skill Barter</a>
+        </div>
+      </div>
+
+      <!-- Budget -->
+      <div class="mp-widget">
+        <div class="mp-widget-title"><i class="fas fa-dollar-sign"></i> Budget Range</div>
+        <div class="mp-pills">
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_type %}interaction_type={{ selected_type }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if preference_mode %}preference_mode={{ preference_mode }}{% endif %}" class="mp-pill {% if not budget_range %}active{% endif %}"><span class="mp-pill-dot dot-all"></span> Any Budget</a>
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_type %}interaction_type={{ selected_type }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if preference_mode %}preference_mode={{ preference_mode }}&{% endif %}budget_range=low" class="mp-pill {% if budget_range == 'low' %}active{% endif %}"><span class="mp-pill-dot dot-low"></span> Under $100</a>
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_type %}interaction_type={{ selected_type }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if preference_mode %}preference_mode={{ preference_mode }}&{% endif %}budget_range=mid" class="mp-pill {% if budget_range == 'mid' %}active{% endif %}"><span class="mp-pill-dot dot-mid"></span> $100 – $999</a>
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_type %}interaction_type={{ selected_type }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if preference_mode %}preference_mode={{ preference_mode }}&{% endif %}budget_range=high" class="mp-pill {% if budget_range == 'high' %}active{% endif %}"><span class="mp-pill-dot dot-high"></span> $1,000+</a>
+          <a href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if selected_type %}interaction_type={{ selected_type }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}{% if preference_mode %}preference_mode={{ preference_mode }}&{% endif %}budget_range=barter" class="mp-pill {% if budget_range == 'barter' %}active{% endif %}"><span class="mp-pill-dot dot-bonly"></span> 🔄 Barter Only</a>
+        </div>
+      </div>
+
+      {% if user.is_authenticated %}
+      <div class="mp-widget" style="display:flex;flex-direction:column;gap:.5rem;">
+        {% if user.role != 'Skilled' %}
+        <a href="{% url 'create_job' %}" class="mp-sidebar-action mp-action-primary"><i class="fas fa-plus-circle"></i> Post a Job</a>
+        {% endif %}
+        <a href="{% url 'my_activity' %}" class="mp-sidebar-action mp-action-secondary"><i class="fas fa-clipboard-list"></i> My Activity</a>
+      </div>
+      {% endif %}
+
+    </aside>
+
+    <!-- MAIN FEED -->
+    <main class="mp-feed">
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" style="margin-bottom:1rem;">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Active filters -->
+      {% if search_query or selected_category or selected_type or budget_range %}
+      <div class="mp-active-filters">
+        <span class="mp-af-label"><i class="fas fa-filter"></i> Filters:</span>
+        {% if search_query %}<span class="mp-af-chip">🔍 "{{ search_query }}"</span>{% endif %}
+        {% if selected_category %}{% for cat in categories %}{% if cat.id == selected_category %}<span class="mp-af-chip">📂 {{ cat.name }}</span>{% endif %}{% endfor %}{% endif %}
+        {% if selected_type %}<span class="mp-af-chip">{{ selected_type }}</span>{% endif %}
+        {% if budget_range %}<span class="mp-af-chip">{% if budget_range == 'low' %}Under $100{% elif budget_range == 'mid' %}$100–$999{% elif budget_range == 'high' %}$1,000+{% else %}Barter Only{% endif %}</span>{% endif %}
+        <a href="{% url 'marketplace_feed' %}" class="mp-af-clear"><i class="fas fa-times-circle"></i> Clear all</a>
+      </div>
+      {% endif %}
+
+      <!-- Smart match recommended -->
+      {% if preference_mode == 'on' %}
+        <div class="mp-section-banner mp-banner-pref">
+          <i class="fas fa-star"></i>
+          <span>Matched to Your Skills</span>
+          <span style="margin-left:auto;background:#fbbf24;color:#fff;font-size:.72rem;padding:.2rem .6rem;border-radius:20px;">SMART MATCH ON</span>
+        </div>
+        {% if recommended_jobs %}
+          <div class="mp-job-grid" style="margin-bottom:1.5rem;">
+            {% for job in recommended_jobs %}
+              {% include "accounts/_job_card_v3.html" with job=job highlight=True %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="mp-empty" style="margin-bottom:1.5rem;">
+            <i class="fas fa-magic"></i>
+            <h3>No Skill Matches Yet</h3>
+            <p>Take assessments in Skill Lab to earn badges and unlock matched jobs.</p>
+            <a href="{% url 'skill_lab_dashboard' %}" class="mp-view-btn"><i class="fas fa-flask"></i> Go to Skill Lab</a>
+          </div>
+        {% endif %}
+        <div class="mp-section-banner mp-banner-other">
+          <i class="fas fa-globe"></i> <span>Other Opportunities</span>
+          <span class="mp-count-badge" style="margin-left:auto;">{{ jobs|length }} listing{% if jobs|length != 1 %}s{% endif %}</span>
+        </div>
+      {% else %}
+        <div class="mp-feed-header">
+          <div class="mp-feed-title">
+            <i class="fas fa-briefcase"></i> All Open Jobs
+            <span class="mp-count-badge">{{ jobs|length }} listing{% if jobs|length != 1 %}s{% endif %}</span>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="mp-job-grid" id="jobGrid">
+        {% for job in jobs %}
+          {% include "accounts/_job_card_v3.html" with job=job highlight=False %}
+        {% empty %}
+          <div class="mp-empty">
+            <i class="fas fa-search"></i>
+            <h3>No Jobs Found</h3>
+            <p>Try adjusting your filters or clearing your search.</p>
+            <a href="{% url 'marketplace_feed' %}" class="mp-view-btn">Clear Filters</a>
+          </div>
+        {% endfor %}
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}SkillCurrency - The Skill Lab{% endblock %}
+
+{% block content %}
+<div class="lab-container dashboard-layout">
+    <div class="lab-main">
+        <div class="hero-banner-purple">
+            <h2>Evaluate Your Expertise</h2>
+            <p>Take AI-proctored assessments to earn badges and increase your hourly rate.</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <h3 class="section-title">Recommended Assessments</h3>
+        <div class="assessment-list">
+            {% for category in categories %}
+                <div class="assessment-list-item">
+                    <div class="assessment-info">
+                        <h4>{{ category.name }} <span class="difficulty-tag">AI Generated</span></h4>
+                        <p class="assessment-meta">Duration: 15 Mins • 10 Questions • Real-Time Scenarios</p>
+                    </div>
+                    <div class="assessment-action">
+                        <a href="{% url 'take_assessment' category.id %}" class="btn btn-purple">Start Test</a>
+                    </div>
+                </div>
+            {% empty %}
+                <p>No skill categories available at the moment.</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="lab-sidebar">
+        <div class="sidebar-card sc-potential">
+            <h2 class="sc-amount">850</h2>
+            <p class="sc-label">SkillCurrency Potential</p>
+            <p class="sc-sub">Complete pending tests to unlock.</p>
+        </div>
+        
+        <div class="sidebar-card progress-card">
+            <h4>My Progress</h4>
+            {% for cat_id, badge in user_badges.items %}
+                <div class="progress-item">
+                    <div class="progress-header">
+                        <span>{{ badge.category.name }}</span>
+                        <span>Level {{ badge.level }}/5</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {% widthratio badge.level 5 100 %}%;"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-sm">No badges earned yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

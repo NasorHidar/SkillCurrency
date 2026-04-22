@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SkillCurrency{% endblock %}</title>
+    {% load static %}
+    <!-- Include Font Awesome for social icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="{% static 'images/logo.png' %}" alt="SkillCurrency Logo" class="logo-icon">
+            <h1><a href="{% url 'landing_page' %}">SkillCurrency</a></h1>
+        </div>
+        <nav class="main-nav">
+            <a href="{% url 'landing_page' %}#how-it-works">How it Works</a>
+            <a href="{% url 'marketplace_feed' %}">Marketplace</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'skill_lab_dashboard' %}">Skill Lab</a>
+            {% endif %}
+            <a href="{% url 'landing_page' %}#features">Features</a>
+        </nav>
+        <div class="auth-nav">
+            {% if user.is_authenticated %}
+                <div class="nav-item notification-dropdown">
+                    <a href="#" class="nav-link bell-icon" id="notif-toggle">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notifications_count > 0 %}
+                            <span class="badge">{{ unread_notifications_count }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-menu" id="notif-menu">
+                        <div class="dropdown-header">Notifications</div>
+                        {% for notif in notifications %}
+                            <a href="{% url 'mark_notification_read' notif.id %}" class="dropdown-item {% if not notif.is_read %}unread{% endif %}">
+                                <p>{{ notif.message }}</p>
+                                <small>{{ notif.created_at|timesince }} ago</small>
+                            </a>
+                        {% empty %}
+                            <div class="dropdown-item text-center">No notifications</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <a href="{% url 'public_profile' user.username %}" style="text-decoration: none;">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-accent); vertical-align: middle;">
+                    {% endif %}
+                    <span style="font-weight: 600; color: var(--text-dark); margin-left: 0.5rem; vertical-align: middle;">{{ user.username }} ({{ user.role }})</span>
+                </a>
+                <a href="{% url 'settings_page' %}" class="btn" style="background: none; color: #6b7280; padding: 0.5rem;"><i class="fas fa-cog"></i></a>
+                <a href="{% url 'financial_hub' %}" class="btn" style="background: #e9d5ff; color: #6b21a8;"><i class="fas fa-wallet"></i> Wallet</a>
+                <a href="{% url 'identity_vault' %}" class="btn btn-vault"><i class="fas fa-id-card"></i> Vault</a>
+                <a href="{% url 'logout' %}" class="btn btn-secondary">Sign Out</a>
+            {% else %}
+                <a href="{% url 'signin' %}" class="btn">Sign in</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3>SkillCurrency</h3>
+                <p>Empowering the youth of Bangladesh to learn and earn through skill exchange.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div>
+                <h3>Platform</h3>
+                <div class="footer-links">
+                    <a href="{% url 'marketplace_feed' %}">Browse Jobs</a>
+                    <a href="{% url 'skill_lab_dashboard' %}">Skill Lab</a>
+                    <a href="{% url 'landing_page' %}#features">Pricing & Features</a>
+                </div>
+            </div>
+            <div>
+                <h3>Account</h3>
+                <div class="footer-links">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'public_profile' user.username %}">My Dashboard</a>
+                        <a href="{% url 'financial_hub' %}">Financial Hub</a>
+                        <a href="{% url 'settings_page' %}">Settings</a>
+                    {% else %}
+                        <a href="{% url 'signup' %}">Sign Up</a>
+                        <a href="{% url 'signin' %}">Sign In</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <h3>Support</h3>
+                <div class="footer-links">
+                    <a href="{% url 'landing_page' %}#how-it-works">How It Works</a>
+                    <a href="{% url 'identity_vault' %}">Safety & Verification</a>
+                    <a href="{% url 'landing_page' %}#about">About Us</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 SkillCurrency. All rights reserved. | Built with ❤️ in Bangladesh
+        </div>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const notifToggle = document.getElementById('notif-toggle');
+            const notifMenu = document.getElementById('notif-menu');
+            
+            if (notifToggle && notifMenu) {
+                notifToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    notifMenu.classList.toggle('show');
+                });
+                
+                // Close when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!notifToggle.contains(e.target) && !notifMenu.contains(e.target)) {
+                        notifMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

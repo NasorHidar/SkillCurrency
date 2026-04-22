@@ -1,0 +1,42 @@
+{% load static %}
+<article class="job-card {% if highlight %}job-card--highlight{% endif %}">
+  <div class="job-card-header">
+    <span class="job-type-badge {% if job.interaction_type == 'Paid Service' %}badge-paid{% else %}badge-barter{% endif %}">
+      {% if job.interaction_type == 'Paid Service' %}
+        <i class="fas fa-dollar-sign"></i> Paid
+      {% else %}
+        <i class="fas fa-exchange-alt"></i> Barter
+      {% endif %}
+    </span>
+    <span class="job-cat-badge">
+      <i class="fas fa-tag"></i> {{ job.category.name }}
+    </span>
+    {% if highlight %}
+      <span class="job-match-badge"><i class="fas fa-star"></i> Skill Match</span>
+    {% endif %}
+  </div>
+
+  <h3 class="job-card-title">
+    <a href="{% url 'job_detail' job.id %}">{{ job.title }}</a>
+  </h3>
+
+  <p class="job-card-desc">{{ job.description|truncatechars:130 }}</p>
+
+  <div class="job-card-meta">
+    <span class="meta-item">
+      <i class="fas fa-wallet"></i> {{ job.budget_or_terms }}
+    </span>
+    <span class="meta-item">
+      <i class="fas fa-user-circle"></i> {{ job.author.username }}
+    </span>
+  </div>
+
+  <div class="job-card-footer">
+    <span class="job-card-time">
+      <i class="fas fa-clock"></i> {{ job.created_at|timesince }} ago
+    </span>
+    <a href="{% url 'job_detail' job.id %}" class="btn btn-purple btn-sm">
+      View Details <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+</article>

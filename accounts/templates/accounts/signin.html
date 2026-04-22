@@ -1,0 +1,32 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Sign In - SkillCurrency{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h2>Welcome Back</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="errorlist" style="margin-bottom: 1rem;">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% for field in form %}
+            <p>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                    <span class="errorlist">{{ error }}</span>
+                {% endfor %}
+            </p>
+        {% endfor %}
+        <button type="submit" class="btn btn-full">Sign In</button>
+    </form>
+    <p class="text-center mt-4">
+        Don't have an account? <a href="{% url 'signup' %}" style="color: var(--primary-accent); font-weight: 600; text-decoration: none;">Sign Up</a>
+    </p>
+</div>
+{% endblock %}

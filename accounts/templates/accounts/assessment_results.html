@@ -1,0 +1,78 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Assessment Results{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    <div class="results-card">
+        <h2>Assessment Complete</h2>
+        <p class="results-meta">{{ result.category_name }}</p>
+        
+        <div class="score-ring {% if result.passed %}passed{% else %}failed{% endif %}">
+            <svg viewBox="0 0 36 36" class="circular-chart">
+                <path class="circle-bg"
+                  d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path class="circle"
+                  stroke-dasharray="{{ result.score }}, 100"
+                  d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <text x="18" y="20.35" class="percentage">{{ result.score }}%</text>
+            </svg>
+        </div>
+        
+        <div class="results-status">
+            {% if result.passed %}
+                <h3 class="success-text">Excellent Work!</h3>
+                <p>You have demonstrated mastery in this subject.</p>
+                
+                <form method="POST" action="{% url 'mint_skillcurrency' %}" class="mt-4">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-purple btn-large"><i class="fas fa-coins"></i> Mint 500 SkillCurrency</button>
+                </form>
+            {% else %}
+                <h3 class="error-text">Needs Improvement</h3>
+                <p>You need at least 80% to pass. Review the material and try again later.</p>
+                <a href="{% url 'skill_lab_dashboard' %}" class="btn btn-secondary mt-4">Back to Dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="results-columns">
+        <div class="results-insights">
+            <h4><i class="fas fa-robot"></i> AI Proctor Insights</h4>
+            <div class="insight-box insight-good">
+                <div class="insight-title"><i class="fas fa-check"></i> High Confidence</div>
+                <div class="insight-desc">You answered 80% of questions in under 45 seconds.</div>
+            </div>
+            {% if not result.passed %}
+            <div class="insight-box insight-bad">
+                <div class="insight-title"><i class="fas fa-exclamation-triangle"></i> Topic Weakness</div>
+                <div class="insight-desc">Detected hesitation and revisions on practical scenario questions.</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="results-next-steps">
+            <h4>Next Steps</h4>
+            <ul>
+                {% if result.passed %}
+                    <li>Add "{{ result.category_name }} Expert" badge to your profile.</li>
+                    <li>View 4 High-Value Gigs requiring this skill.</li>
+                    <li><strong>Challenge:</strong> Take the next module.</li>
+                {% else %}
+                    <li>Review documentation for {{ result.category_name }}.</li>
+                    <li>Practice real-time problem solving.</li>
+                    <li>Retake the test in 24 hours.</li>
+                {% endif %}
+            </ul>
+            <a href="{% url 'skill_lab_dashboard' %}" class="back-link">Back to Lab Dashboard &rarr;</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

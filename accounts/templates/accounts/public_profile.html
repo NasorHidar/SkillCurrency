@@ -1,0 +1,536 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }} – SkillCurrency Dashboard{% endblock %}
+
+{% block content %}
+<div class="profile-dashboard">
+
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="profile-sidebar">
+        <div class="ps-brand">
+            <i class="fas fa-layer-group"></i> SkillCurrency
+        </div>
+
+        <nav class="ps-nav">
+            <a href="{% url 'public_profile' profile_user.username %}" class="ps-nav-item active">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="{% url 'marketplace_feed' %}" class="ps-nav-item">
+                <i class="fas fa-briefcase"></i> Marketplace
+            </a>
+            <a href="{% url 'my_activity' %}" class="ps-nav-item">
+                <i class="fas fa-clipboard-list"></i> My Activity
+            </a>
+            <a href="{% url 'financial_hub' %}" class="ps-nav-item">
+                <i class="fas fa-wallet"></i> Wallet
+            </a>
+            <a href="{% url 'skill_lab_dashboard' %}" class="ps-nav-item">
+                <i class="fas fa-flask"></i> Skill Lab
+            </a>
+            <a href="{% url 'identity_vault' %}" class="ps-nav-item">
+                <i class="fas fa-id-card"></i> Identity Vault
+            </a>
+            <a href="{% url 'settings_page' %}" class="ps-nav-item">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </nav>
+
+        <div class="ps-user">
+            <div class="ps-user-avatar">{{ profile_user.username|make_list|first|upper }}</div>
+            <div class="ps-user-info">
+                <div class="ps-username">{{ profile_user.username }}</div>
+                <a href="{% url 'logout' %}" class="ps-logout">Sign Out</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ══ MAIN ══ -->
+    <div class="profile-main">
+
+        <!-- Header row -->
+        <div class="pm-header">
+            <div class="pm-welcome">
+                <h1>Welcome back, {{ profile_user.username }}! 👋</h1>
+                <p>Here's what's happening with your skills today.</p>
+            </div>
+            <div class="pm-header-actions">
+                <form action="{% url 'marketplace_feed' %}" method="GET" class="pm-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" name="q" placeholder="Search jobs…">
+                </form>
+                {% if profile_user == request.user %}
+                    <a href="{% url 'marketplace_feed' %}?preference_mode=on" class="btn btn-purple btn-sm">
+                        <i class="fas fa-star"></i> Smart Match
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="pm-stats">
+            <div class="pm-stat-card">
+                <div class="pm-stat-icon icon-purple"><i class="fas fa-wallet"></i></div>
+                <div class="pm-stat-info">
+                    <span class="pm-stat-val">${{ profile_user.wallet_balance|floatformat:2 }}</span>
+                    <span class="pm-stat-lbl">Wallet Balance</span>
+                </div>
+            </div>
+            <div class="pm-stat-card">
+                <div class="pm-stat-icon icon-green"><i class="fas fa-box"></i></div>
+                <div class="pm-stat-info">
+                    <span class="pm-stat-val">{{ active_orders }}</span>
+                    <span class="pm-stat-lbl">Active Orders</span>
+                </div>
+            </div>
+            <div class="pm-stat-card">
+                <div class="pm-stat-icon icon-orange"><i class="fas fa-medal"></i></div>
+                <div class="pm-stat-info">
+                    <span class="pm-stat-val">{{ badges|length }}</span>
+                    <span class="pm-stat-lbl">Skill Badges</span>
+                </div>
+            </div>
+            <div class="pm-stat-card">
+                <div class="pm-stat-icon icon-blue"><i class="fas fa-id-badge"></i></div>
+                <div class="pm-stat-info">
+                    <span class="pm-stat-val">{{ profile_user.verification_status }}</span>
+                    <span class="pm-stat-lbl">ID Status</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lower grid -->
+        <div class="pm-lower">
+
+            <!-- Recent jobs / orders -->
+            <div class="pm-card pm-orders">
+                <div class="pm-card-header">
+                    <h3><i class="fas fa-list-alt"></i> Recent Activity</h3>
+                    <a href="{% url 'my_activity' %}" class="pm-view-all">View All →</a>
+                </div>
+                {% if recent_orders %}
+                <div class="pm-orders-table-wrap">
+                    <table class="pm-table">
+                        <thead>
+                            <tr>
+                                <th>Service</th><th>Buyer</th><th>Due</th><th>Status</th><th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><strong>{{ order.service }}</strong></td>
+                                <td>{{ order.buyer }}</td>
+                                <td>{{ order.due_date }}</td>
+                                <td>
+                                    <span class="status-pill {% if order.status == 'In Progress' %}status-progress{% else %}status-pending{% endif %}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                                <td>{{ order.amount }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="pm-empty">
+                    <i class="fas fa-inbox"></i>
+                    <p>No recent activity. <a href="{% url 'marketplace_feed' %}">Browse the marketplace</a> to get started.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right column -->
+            <div class="pm-right-col">
+
+                <!-- Profile summary -->
+                <div class="pm-card pm-profile-summary">
+                    {% if profile_user.role == 'Skilled' %}
+                        <span class="pm-pro-badge"><i class="fas fa-check-circle"></i> Verified Pro</span>
+                    {% endif %}
+
+                    <div class="pm-avatar-wrap">
+                        {% if profile_user.avatar %}
+                            <img src="{{ profile_user.avatar.url }}" alt="Avatar" class="pm-avatar-img">
+                        {% else %}
+                            <div class="pm-avatar-placeholder">{{ profile_user.username|make_list|first|upper }}</div>
+                        {% endif %}
+                    </div>
+
+                    <h3>{{ profile_user.get_full_name|default:profile_user.username }}</h3>
+                    <p class="pm-title">{{ professional_title }}</p>
+
+                    {% if badges %}
+                    <div class="pm-badges-row">
+                        {% for badge in badges %}
+                            <span class="pm-badge-chip" title="{{ badge.category.name }} – Level {{ badge.level }}">
+                                <i class="fas fa-award"></i> {{ badge.category.name|truncatechars:12 }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Activity chart -->
+                    <div class="pm-activity">
+                        <h4>Weekly Activity</h4>
+                        <div class="pm-bars">
+                            {% for val in weekly_activity %}
+                                <div class="pm-bar {% if forloop.counter == 3 %}pm-bar-active{% endif %}"
+                                     style="height: {{ val }}%;"
+                                     title="{{ val }}%">
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="pm-bar-days">
+                            <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallet mini card -->
+                <div class="pm-card pm-wallet-mini">
+                    <div class="pm-wallet-label"><i class="fas fa-wallet"></i> Available Balance</div>
+                    <div class="pm-wallet-amount">${{ profile_user.wallet_balance|floatformat:2 }}</div>
+                    <div class="pm-wallet-actions">
+                        <a href="{% url 'financial_hub' %}" class="btn btn-purple btn-sm">
+                            <i class="fas fa-plus-circle"></i> Add Funds
+                        </a>
+                        {% if profile_user == request.user %}
+                        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('withdraw-modal').style.display='flex'">
+                            <i class="fas fa-university"></i> Withdraw
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick links -->
+                <div class="pm-card pm-quick-links">
+                    <h4><i class="fas fa-bolt"></i> Quick Actions</h4>
+                    <a href="{% url 'skill_lab_dashboard' %}" class="pm-quick-btn">
+                        <i class="fas fa-flask"></i> Take Assessment
+                    </a>
+                    <a href="{% url 'marketplace_feed' %}" class="pm-quick-btn">
+                        <i class="fas fa-search"></i> Browse Jobs
+                    </a>
+                    {% if profile_user.role != 'Skilled' %}
+                    <a href="{% url 'create_job' %}" class="pm-quick-btn">
+                        <i class="fas fa-plus"></i> Post a Job
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'settings_page' %}" class="pm-quick-btn">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
+                </div>
+
+            </div><!-- /.pm-right-col -->
+        </div><!-- /.pm-lower -->
+    </div><!-- /.profile-main -->
+</div><!-- /.profile-dashboard -->
+
+<!-- ══ Withdraw Modal ══ -->
+<div id="withdraw-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-university"></i> Withdraw Funds</h3>
+            <button onclick="document.getElementById('withdraw-modal').style.display='none'" class="close-btn">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'withdraw_funds' %}" class="mt-4">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Withdrawal Method</label>
+                <select name="payment_method" class="form-control" required>
+                    <option value="bKash">bKash</option>
+                    <option value="SSLCommerz">Bank Transfer (SSLCommerz)</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top:1rem;">
+                <label>Amount (USD) — Available: ${{ profile_user.wallet_balance|floatformat:2 }}</label>
+                <input type="number" name="amount" min="1" step="0.01"
+                       max="{{ profile_user.wallet_balance }}"
+                       class="form-control" placeholder="e.g. 50.00" required>
+            </div>
+            <button type="submit" class="btn btn-purple btn-block" style="margin-top:1rem;">
+                <i class="fas fa-paper-plane"></i> Request Withdrawal
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* ── Profile Dashboard Layout ──────────────────── */
+.profile-dashboard {
+    display: flex;
+    height: calc(100vh - 70px);
+    overflow: hidden;
+    background: #faf5ff;
+}
+
+/* Sidebar */
+.profile-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: white;
+    border-right: 1px solid #f0e7ff;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    box-shadow: 2px 0 8px rgba(168,85,247,0.05);
+    overflow-y: auto;
+}
+.ps-brand {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #a855f7;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+}
+.ps-nav { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+.ps-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+}
+.ps-nav-item i { width: 16px; text-align: center; }
+.ps-nav-item:hover { background: #fdf4ff; color: #7c3aed; }
+.ps-nav-item.active { background: #a855f7; color: white; }
+.ps-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+}
+.ps-user-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #e9d5ff;
+    color: #7c3aed;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+}
+.ps-username { font-weight: 600; font-size: 0.85rem; color: #111827; }
+.ps-logout { font-size: 0.75rem; color: #9ca3af; text-decoration: none; }
+.ps-logout:hover { color: #ef4444; }
+
+/* Main area */
+.profile-main {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 2.5rem;
+    gap: 1.5rem;
+}
+
+/* Header */
+.pm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.pm-welcome h1 { margin: 0 0 0.25rem; font-size: 1.4rem; color: #111827; }
+.pm-welcome p { margin: 0; color: #6b7280; font-size: 0.9rem; }
+.pm-header-actions { display: flex; align-items: center; gap: 0.75rem; }
+.pm-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid #e9d5ff;
+    border-radius: 20px;
+    padding: 0.45rem 1rem;
+}
+.pm-search i { color: #a855f7; }
+.pm-search input { border: none; outline: none; font-size: 0.9rem; font-family: inherit; width: 180px; background: transparent; }
+
+/* Stats */
+.pm-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+.pm-stat-card {
+    background: white;
+    border: 1px solid #f0e7ff;
+    border-radius: 14px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 6px rgba(168,85,247,0.06);
+}
+.pm-stat-icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+}
+.icon-purple { background: #f3e8ff; color: #a855f7; }
+.icon-green  { background: #dcfce7; color: #16a34a; }
+.icon-orange { background: #ffedd5; color: #f97316; }
+.icon-blue   { background: #e0f2fe; color: #0284c7; }
+.pm-stat-info { display: flex; flex-direction: column; }
+.pm-stat-val { font-size: 1.1rem; font-weight: 700; color: #111827; }
+.pm-stat-lbl { font-size: 0.75rem; color: #6b7280; }
+
+/* Lower grid */
+.pm-lower {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    flex: 1;
+    align-items: start;
+}
+
+/* Cards */
+.pm-card {
+    background: white;
+    border: 1px solid #f0e7ff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(168,85,247,0.06);
+}
+.pm-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+.pm-card-header h3 { margin: 0; font-size: 1rem; color: #111827; display: flex; align-items: center; gap: 0.5rem; }
+.pm-card-header h3 i { color: #a855f7; }
+.pm-view-all { color: #a855f7; text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+.pm-view-all:hover { color: #7c3aed; }
+
+/* Table */
+.pm-orders-table-wrap { overflow-x: auto; }
+.pm-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.pm-table th, .pm-table td { padding: 0.75rem 0.5rem; border-bottom: 1px solid #f3f4f6; text-align: left; }
+.pm-table th { color: #6b7280; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.pm-table tr:hover td { background: #fdf4ff; }
+
+/* Empty state */
+.pm-empty { display: flex; flex-direction: column; align-items: center; padding: 2.5rem 1rem; color: #9ca3af; text-align: center; }
+.pm-empty i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4; }
+.pm-empty p { margin: 0; font-size: 0.9rem; }
+.pm-empty a { color: #a855f7; text-decoration: none; font-weight: 600; }
+
+/* Right column */
+.pm-right-col { display: flex; flex-direction: column; gap: 1rem; }
+
+/* Profile summary card */
+.pm-pro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    margin-bottom: 0.75rem;
+}
+.pm-avatar-wrap {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    margin: 0.5rem auto 1rem;
+    overflow: hidden;
+    border: 3px solid #e9d5ff;
+}
+.pm-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.pm-avatar-placeholder {
+    width: 100%; height: 100%;
+    background: #e9d5ff;
+    color: #7c3aed;
+    font-size: 1.8rem;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+}
+.pm-profile-summary { text-align: center; }
+.pm-profile-summary h3 { margin: 0 0 0.2rem; font-size: 1.05rem; }
+.pm-title { color: #6b7280; font-size: 0.85rem; margin: 0 0 1rem; }
+
+.pm-badges-row { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: center; margin-bottom: 1rem; }
+.pm-badge-chip {
+    background: #f3e8ff;
+    color: #7c3aed;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.pm-activity { text-align: left; margin-top: 0.5rem; }
+.pm-activity h4 { margin: 0 0 0.75rem; font-size: 0.85rem; color: #374151; }
+.pm-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 60px;
+    gap: 5px;
+}
+.pm-bar { flex: 1; background: #e9d5ff; border-radius: 4px 4px 0 0; transition: height 0.3s; }
+.pm-bar-active { background: #a855f7; }
+.pm-bar-days { display: flex; justify-content: space-between; margin-top: 0.3rem; }
+.pm-bar-days span { flex: 1; text-align: center; font-size: 0.65rem; color: #9ca3af; }
+
+/* Wallet mini */
+.pm-wallet-mini { background: linear-gradient(135deg, #9333ea, #7e22ce); color: white; }
+.pm-wallet-label { font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem; }
+.pm-wallet-amount { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; }
+.pm-wallet-actions { display: flex; gap: 0.5rem; }
+.pm-wallet-mini .btn-purple { background: rgba(255,255,255,0.25); color: white; }
+.pm-wallet-mini .btn-purple:hover { background: rgba(255,255,255,0.35); }
+.pm-wallet-mini .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+.pm-wallet-mini .btn-secondary:hover { background: rgba(255,255,255,0.25); }
+
+/* Quick links */
+.pm-quick-links h4 { margin: 0 0 0.9rem; font-size: 0.85rem; color: #7c3aed; display: flex; align-items: center; gap: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.pm-quick-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 10px;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.15s;
+    margin-bottom: 0.35rem;
+    border: 1px solid #f0e7ff;
+}
+.pm-quick-btn i { color: #a855f7; width: 16px; text-align: center; }
+.pm-quick-btn:hover { background: #fdf4ff; border-color: #e9d5ff; color: #7c3aed; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .pm-stats { grid-template-columns: repeat(2, 1fr); }
+    .pm-lower { grid-template-columns: 1fr; }
+    .profile-dashboard { height: auto; overflow: visible; }
+    .profile-main { padding: 1.5rem; }
+}
+@media (max-width: 700px) {
+    .profile-sidebar { display: none; }
+    .pm-stats { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+{% endblock %}

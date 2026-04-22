@@ -1,0 +1,25 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Django stuff
+*.sqlite3
+*.log
+local_settings.py
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Antigravity/IDE specific
+.vscode/
+.idea/

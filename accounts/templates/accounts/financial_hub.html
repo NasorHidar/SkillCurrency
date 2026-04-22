@@ -1,0 +1,158 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Financial Hub - SkillCurrency{% endblock %}
+
+{% block content %}
+<div class="financial-layout">
+    <div class="financial-header">
+        <h2><i class="fas fa-wallet" style="color: var(--primary-accent);"></i> Financial Hub</h2>
+        <p>Manage your wallet, view transactions, and top up your funds securely.</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="financial-cards">
+        <div class="wallet-card">
+            <h3>Total Available Balance</h3>
+            <div class="balance-amount">${{ wallet_balance|floatformat:2 }}</div>
+            <div class="wallet-actions">
+                <button class="btn btn-purple" onclick="document.getElementById('topup-modal').style.display='flex'">
+                    <i class="fas fa-plus-circle"></i> Add Money
+                </button>
+                <button class="btn btn-secondary" onclick="document.getElementById('withdraw-modal').style.display='flex'">
+                    <i class="fas fa-university"></i> Withdraw
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h3>Quick Stats</h3>
+            <div class="stat-row">
+                <span>Total Transactions:</span>
+                <strong>{{ transactions.count }}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Last Activity:</span>
+                <strong>{% if transactions %}{{ transactions.first.timestamp|date:"M d, Y" }}{% else %}N/A{% endif %}</strong>
+            </div>
+            <div class="stat-row">
+                <span>Current Balance:</span>
+                <strong style="color: #a855f7;">${{ wallet_balance|floatformat:2 }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="transactions-section">
+        <h3>Recent Transactions</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Reference ID</th>
+                        <th>Description</th>
+                        <th>Method</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in transactions %}
+                        <tr>
+                            <td>{{ txn.timestamp|date:"M d, Y H:i" }}</td>
+                            <td><span class="ref-id">{{ txn.reference_id }}</span></td>
+                            <td>{{ txn.description }}</td>
+                            <td>{{ txn.payment_method }}</td>
+                            <td class="{% if txn.amount > 0 %}text-green{% elif txn.amount < 0 %}text-red{% endif %}">
+                                {% if txn.amount > 0 %}+{% endif %}${{ txn.amount|floatformat:2 }}
+                            </td>
+                            <td><span class="status-pill status-{{ txn.status|slugify }}">{{ txn.status }}</span></td>
+                            <td>
+                                {% if txn.status == 'Completed' %}
+                                    <a href="{% url 'invoice_receipt' txn.reference_id %}" class="btn btn-sm btn-secondary" target="_blank">
+                                        <i class="fas fa-file-invoice"></i> Receipt
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align:center; padding: 2rem; color: #9ca3af;">
+                                No transactions found. <a href="#" onclick="document.getElementById('topup-modal').style.display='flex'; return false;" style="color:#a855f7;">Top up your wallet</a> to get started!
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Top-Up Modal ══ -->
+<div id="topup-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus-circle" style="color:#a855f7;"></i> Top Up Wallet</h3>
+            <button onclick="document.getElementById('topup-modal').style.display='none'" class="close-btn">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'top_up_wallet' %}" style="margin-top: 1.5rem;">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Select Payment Gateway</label>
+                <select name="payment_method" class="form-control" required>
+                    <option value="bKash">bKash (Simulated)</option>
+                    <option value="SSLCommerz">SSLCommerz (Simulated)</option>
+                    <option value="Internal Wallet">Internal Transfer</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label>Amount (USD)</label>
+                <input type="number" name="amount" min="1" step="0.01" class="form-control" placeholder="e.g. 100.00" required>
+            </div>
+            <button type="submit" class="btn btn-purple btn-block" style="margin-top: 1.25rem;">
+                <i class="fas fa-paper-plane"></i> Proceed to Payment
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ══ Withdraw Modal ══ -->
+<div id="withdraw-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-university" style="color:#a855f7;"></i> Withdraw Funds</h3>
+            <button onclick="document.getElementById('withdraw-modal').style.display='none'" class="close-btn">&times;</button>
+        </div>
+        <p style="margin: 0.75rem 0 1.25rem; color: #6b7280; font-size: 0.9rem;">
+            Available balance: <strong style="color: #111827;">${{ wallet_balance|floatformat:2 }}</strong>
+        </p>
+        <form method="POST" action="{% url 'withdraw_funds' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Withdrawal Method</label>
+                <select name="payment_method" class="form-control" required>
+                    <option value="bKash">bKash</option>
+                    <option value="SSLCommerz">Bank Transfer (SSLCommerz)</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label>Amount (USD)</label>
+                <input type="number" name="amount" min="1" step="0.01"
+                       max="{{ wallet_balance }}"
+                       class="form-control" placeholder="e.g. 50.00" required>
+            </div>
+            <button type="submit" class="btn btn-purple btn-block" style="margin-top: 1.25rem;">
+                <i class="fas fa-paper-plane"></i> Request Withdrawal
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

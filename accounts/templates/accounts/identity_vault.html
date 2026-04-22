@@ -1,0 +1,43 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}SkillCurrency - Identity Vault{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card" style="max-width: 500px; width: 100%;">
+        <h2>Identity Vault</h2>
+        <p style="margin-bottom: 2rem; color: #4a5568;">Upload your ID document to verify your profile and increase trust on the platform.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="status-banner status-{{ user.verification_status|lower }}">
+            <strong>Current Status:</strong> {{ user.verification_status }}
+        </div>
+
+        {% if user.verification_status == 'Unverified' or user.verification_status == 'Rejected' %}
+            <form method="POST" enctype="multipart/form-data" class="vault-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="id_document">Upload ID Document (PDF, JPG, PNG)</label>
+                    <input type="file" name="id_document" id="id_document" required accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Submit for Verification</button>
+            </form>
+        {% else %}
+            <div class="vault-locked">
+                <i class="fas fa-lock" style="font-size: 3rem; color: var(--primary-accent); margin-bottom: 1rem;"></i>
+                <h3>Vault Locked</h3>
+                <p>Your document is currently being reviewed or has already been approved. You cannot upload a new document at this time.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

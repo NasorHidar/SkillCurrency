@@ -1,0 +1,91 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}{{ job.title }} - SkillCurrency{% endblock %}
+
+{% block content %}
+<div class="job-detail-layout">
+    <div class="job-detail-main">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="job-header-card">
+            <div class="job-meta">
+                <span class="job-type {% if job.interaction_type == 'Paid Service' %}type-paid{% else %}type-barter{% endif %}">{{ job.interaction_type }}</span>
+                <span class="job-category">{{ job.category.name }}</span>
+            </div>
+            <h1>{{ job.title }}</h1>
+            <p class="posted-by">Posted by <strong>{{ job.author.username }}</strong> • {{ job.created_at|timesince }} ago</p>
+        </div>
+
+        <div class="job-description-card mt-4">
+            <h3>Job Description</h3>
+            <p>{{ job.description|linebreaksbr }}</p>
+        </div>
+
+        {% if request.user == job.author %}
+            <div class="proposals-card mt-4">
+                <h3>Proposals Received ({{ proposals.count }})</h3>
+                {% if proposals %}
+                    <div class="proposals-list">
+                        {% for prop in proposals %}
+                            <div class="proposal-item">
+                                <div class="prop-header">
+                                    <h4><a href="{% url 'public_profile' prop.applicant.username %}">{{ prop.applicant.username }}</a></h4>
+                                    <span class="status-pill {% if prop.status == 'Pending' %}status-pending{% elif prop.status == 'Accepted' %}status-progress{% else %}bg-gray-200 text-gray-700{% endif %}">{{ prop.status }}</span>
+                                </div>
+                                <p><strong>Proposed Terms:</strong> {{ prop.proposed_terms }}</p>
+                                <p class="text-sm">{{ prop.cover_letter }}</p>
+                                
+                                {% if request.user == job.author and prop.status == 'Pending' and job.status == 'Open' %}
+                                    <form method="POST" action="{% url 'accept_proposal' prop.id %}" class="mt-3">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-purple btn-sm">Accept & Start Workspace</button>
+                                    </form>
+                                {% endif %}
+                                
+                                {% if prop.status == 'Accepted' and prop.agreement %}
+                                    <div class="mt-3">
+                                        <a href="{% url 'workspace' prop.agreement.id %}" class="btn btn-secondary btn-sm">Go to Workspace</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray">No proposals yet.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="job-detail-sidebar">
+        <div class="job-sidebar-card">
+            <h3>Job Details</h3>
+            <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">{{ job.status }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Budget/Terms:</span>
+                <span class="detail-value font-bold">{{ job.budget_or_terms }}</span>
+            </div>
+
+            {% if request.user.is_authenticated and request.user != job.author %}
+                <div class="mt-4">
+                    <a href="{% url 'submit_proposal' job.id %}" class="btn btn-purple btn-block">Submit a Proposal</a>
+                </div>
+            {% elif not request.user.is_authenticated %}
+                <div class="mt-4">
+                    <a href="{% url 'signin' %}" class="btn btn-secondary btn-block">Log in to Propose</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

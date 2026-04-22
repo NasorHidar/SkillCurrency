@@ -1,0 +1,77 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Post a Premium Job - SkillCurrency{% endblock %}
+
+{% block content %}
+<div class="premium-form-container">
+    <div class="form-header">
+        <h2>What do you need done?</h2>
+        <p>Post a job or skill barter request and get proposals from top-tier, verified professionals.</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-danger">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST" action="{% url 'create_job' %}" class="premium-form">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h4 class="section-heading"><span class="step-num">1</span> Basic Details</h4>
+            
+            <div class="form-group">
+                <label for="title">Project Title</label>
+                <input type="text" id="title" name="title" class="form-control input-premium" required placeholder="e.g. Build a responsive E-Commerce Website">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label for="category">Category</label>
+                    <div class="select-wrapper">
+                        <select name="category" id="category" class="form-control input-premium" required>
+                            <option value="">Select a Category</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="fas fa-chevron-down select-icon"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group flex-1">
+                    <label for="interaction_type">Interaction Type</label>
+                    <div class="select-wrapper">
+                        <select name="interaction_type" id="interaction_type" class="form-control input-premium" required>
+                            <option value="Paid Service">Paid Service ($)</option>
+                            <option value="Skill Barter">Skill Barter (Trade)</option>
+                        </select>
+                        <i class="fas fa-chevron-down select-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4 class="section-heading"><span class="step-num">2</span> Scope & Budget</h4>
+            
+            <div class="form-group">
+                <label for="budget_or_terms">Budget or Barter Terms</label>
+                <input type="text" id="budget_or_terms" name="budget_or_terms" class="form-control input-premium" required placeholder="e.g. $1,500 USD or 'I will design your brand identity in exchange'">
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Detailed Description</label>
+                <textarea id="description" name="description" class="form-control input-premium" rows="6" required placeholder="Describe your project, required skills, and expected timeline in detail..."></textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'marketplace_feed' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-purple btn-large">Post Job <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </form>
+</div>
+{% endblock %}

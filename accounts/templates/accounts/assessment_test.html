@@ -1,0 +1,114 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Assessment: {{ category.name }}{% endblock %}
+
+{% block content %}
+<div class="assessment-layout">
+    <div class="assessment-header-bar">
+        <h3>{{ category.name }} <span class="question-count">Question <span id="current-q">1</span> of {{ questions|length }}</span></h3>
+        <div class="timer" id="test-timer">15:00</div>
+        <a href="javascript:document.getElementById('assessment-form').submit();" class="btn btn-danger btn-sm">End Test</a>
+    </div>
+
+    <div class="assessment-body">
+        <div class="assessment-main">
+            {% if not questions %}
+                <div class="alert alert-warning">
+                    No questions available. Please check back later.
+                </div>
+            {% else %}
+                <form id="assessment-form" method="POST" action="{% url 'grade_assessment' category.id %}">
+                    {% csrf_token %}
+                    
+                    <div class="questions-wrapper">
+                        {% for question in questions %}
+                            <div class="question-slide" id="q-slide-{{ forloop.counter }}" {% if not forloop.first %}style="display:none;"{% endif %}>
+                                <div class="question-card">
+                                    <h4 class="q-title">Question {{ forloop.counter }}</h4>
+                                    <p class="q-text">{{ question.question_text|linebreaksbr }}</p>
+                                    <input type="hidden" name="question_id" value="{{ question.id }}">
+                                    
+                                    <div class="options options-radio">
+                                        <label class="option-label">
+                                            <input type="radio" name="question_{{ question.id }}" value="A" required>
+                                            <span class="option-text">{{ question.option_a }}</span>
+                                        </label>
+                                        <label class="option-label">
+                                            <input type="radio" name="question_{{ question.id }}" value="B" required>
+                                            <span class="option-text">{{ question.option_b }}</span>
+                                        </label>
+                                        <label class="option-label">
+                                            <input type="radio" name="question_{{ question.id }}" value="C" required>
+                                            <span class="option-text">{{ question.option_c }}</span>
+                                        </label>
+                                        <label class="option-label">
+                                            <input type="radio" name="question_{{ question.id }}" value="D" required>
+                                            <span class="option-text">{{ question.option_d }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="slide-actions">
+                                    {% if not forloop.last %}
+                                        <button type="button" class="btn btn-purple next-btn" onclick="nextQuestion({{ forloop.counter }})">Next Question <i class="fas fa-arrow-right"></i></button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-purple">Submit Assessment</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+        
+        <div class="assessment-sidebar">
+            <div class="proctor-box">
+                <h4><i class="fas fa-video"></i> AI Proctor</h4>
+                <div class="video-feed-mock">
+                    <i class="fas fa-user-circle"></i>
+                    <span class="live-indicator"><span class="dot"></span> LIVE FEED</span>
+                </div>
+                <div class="proctor-status">
+                    <i class="fas fa-check-circle"></i> <strong>Environment Secure</strong><br>
+                    <span class="text-xs">Eye movement is within normal range.<br>No secondary devices detected.</span>
+                </div>
+            </div>
+            
+            <div class="rules-box">
+                <h5>Rules:</h5>
+                <ul>
+                    <li>Do not leave this tab.</li>
+                    <li>Keep your face visible.</li>
+                    <li>No external audio detected.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function nextQuestion(currentIndex) {
+        document.getElementById('q-slide-' + currentIndex).style.display = 'none';
+        document.getElementById('q-slide-' + (currentIndex + 1)).style.display = 'block';
+        document.getElementById('current-q').innerText = currentIndex + 1;
+    }
+
+    // Simple countdown timer
+    let timeInSeconds = 15 * 60;
+    const timerElement = document.getElementById('test-timer');
+    
+    const interval = setInterval(() => {
+        timeInSeconds--;
+        if (timeInSeconds <= 0) {
+            clearInterval(interval);
+            document.getElementById('assessment-form').submit();
+        } else {
+            let m = Math.floor(timeInSeconds / 60);
+            let s = timeInSeconds % 60;
+            timerElement.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
+    }, 1000);
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% load static %}
+<article class="mp-job-card {% if highlight %}is-highlight{% endif %}">
+
+  <div class="mp-card-top">
+    <div class="mp-card-badges">
+      <span class="mc-badge {% if job.interaction_type == 'Paid Service' %}mc-paid{% else %}mc-barter{% endif %}">
+        {% if job.interaction_type == 'Paid Service' %}<i class="fas fa-dollar-sign"></i> Paid{% else %}<i class="fas fa-exchange-alt"></i> Barter{% endif %}
+      </span>
+      <span class="mc-badge mc-cat"><i class="fas fa-tag"></i> {{ job.category.name }}</span>
+      {% if highlight %}<span class="mc-badge mc-match"><i class="fas fa-star"></i> Skill Match</span>{% endif %}
+    </div>
+    <div class="mp-card-author">
+      <div class="mp-author-avatar">{{ job.author.username|make_list|first|upper }}</div>
+      {{ job.author.username }}
+    </div>
+  </div>
+
+  <h3 class="mp-card-title">
+    <a href="{% url 'job_detail' job.id %}">{{ job.title }}</a>
+  </h3>
+
+  <p class="mp-card-desc">{{ job.description|truncatechars:140 }}</p>
+
+  <div class="mp-card-bottom">
+    <div>
+      <div class="mp-card-budget"><i class="fas fa-wallet"></i> {{ job.budget_or_terms }}</div>
+      <div class="mp-card-time"><i class="fas fa-clock"></i> {{ job.created_at|timesince }} ago</div>
+    </div>
+    <a href="{% url 'job_detail' job.id %}" class="mp-view-btn">View <i class="fas fa-arrow-right"></i></a>
+  </div>
+
+</article>

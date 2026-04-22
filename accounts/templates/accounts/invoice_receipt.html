@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ transaction.reference_id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            margin: 0;
+            padding: 2rem;
+            color: #1f2937;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+        .brand h1 {
+            color: #a855f7;
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+        .invoice-meta {
+            text-align: right;
+        }
+        .invoice-meta h2 {
+            margin: 0 0 0.5rem 0;
+            color: #4b5563;
+        }
+        .meta-row {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        .details-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+        }
+        .details-box {
+            flex: 1;
+        }
+        .details-box h3 {
+            font-size: 1rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 1rem;
+            background: #faf5ff;
+            color: #6b21a8;
+            font-weight: 600;
+        }
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .totals-box {
+            width: 300px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+        .grand-total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #a855f7;
+            border-top: 2px solid #f3f4f6;
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+        .footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.85rem;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 2rem;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #dcfce7;
+            color: #166534;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .invoice-container { box-shadow: none; max-width: 100%; padding: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="invoice-container">
+    <div class="no-print" style="margin-bottom: 2rem;">
+        <button onclick="window.print()" style="background: #a855f7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            <i class="fas fa-print"></i> Print / Save PDF
+        </button>
+        <a href="{% url 'financial_hub' %}" style="color: #6b7280; text-decoration: none; margin-left: 1rem;">Back to Hub</a>
+    </div>
+
+    <div class="invoice-header">
+        <div class="brand">
+            <h1>SkillCurrency</h1>
+            <p style="margin: 0; color: #6b7280;">Secure Payments Ledger</p>
+        </div>
+        <div class="invoice-meta">
+            <h2>INVOICE / RECEIPT</h2>
+            <div class="meta-row"><strong>Ref #:</strong> {{ transaction.reference_id }}</div>
+            <div class="meta-row"><strong>Date:</strong> {{ transaction.timestamp|date:"M d, Y H:i" }}</div>
+            <div class="meta-row">
+                <span class="status-badge">{{ transaction.status }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="details-section">
+        <div class="details-box">
+            <h3>Billed To</h3>
+            <strong>{{ transaction.user.username }}</strong><br>
+            Role: {{ transaction.user.role }}<br>
+            SkillCurrency Platform User
+        </div>
+        <div class="details-box" style="text-align: right;">
+            <h3>Payment Info</h3>
+            <strong>Method:</strong> {{ transaction.payment_method }}<br>
+            <strong>Type:</strong> {{ transaction.transaction_type }}
+        </div>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th style="text-align: right;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ transaction.description }}</td>
+                <td style="text-align: right;">
+                    {% if transaction.amount < 0 %}
+                        -${{ transaction.amount|stringformat:"f"|slice:"1:" }}
+                    {% else %}
+                        ${{ transaction.amount|floatformat:2 }}
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="totals-section">
+        <div class="totals-box">
+            <div class="total-row">
+                <span>Subtotal</span>
+                <span>
+                    {% if transaction.amount < 0 %}
+                        ${{ transaction.amount|stringformat:"f"|slice:"1:" }}
+                    {% else %}
+                        ${{ transaction.amount|floatformat:2 }}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="total-row">
+                <span>Fees</span>
+                <span>$0.00</span>
+            </div>
+            <div class="total-row grand-total">
+                <span>Total</span>
+                <span>
+                    {% if transaction.amount < 0 %}
+                        ${{ transaction.amount|stringformat:"f"|slice:"1:" }}
+                    {% else %}
+                        ${{ transaction.amount|floatformat:2 }}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Thank you for using SkillCurrency! For support, contact billing@skillcurrency.com</p>
+        <p>This is a computer-generated document. No signature is required.</p>
+    </div>
+</div>
+
+</body>
+</html>

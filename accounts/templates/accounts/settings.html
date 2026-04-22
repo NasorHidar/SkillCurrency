@@ -1,0 +1,79 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Settings - SkillCurrency{% endblock %}
+
+{% block content %}
+<div class="settings-layout">
+    <div class="settings-sidebar">
+        <ul class="settings-nav">
+            <li class="active"><a href="#profile"><i class="fas fa-user"></i> Public Profile</a></li>
+            <li><a href="#account"><i class="fas fa-cog"></i> Account Settings</a></li>
+            <li><a href="{% url 'identity_vault' %}"><i class="fas fa-id-card"></i> Identity Vault</a></li>
+        </ul>
+    </div>
+    
+    <div class="settings-main">
+        <div class="settings-header">
+            <h2>Profile Settings</h2>
+            <p>Update your public profile information, avatar, and bio.</p>
+        </div>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="POST" action="{% url 'settings_page' %}" enctype="multipart/form-data" class="settings-form">
+            {% csrf_token %}
+            
+            <div class="avatar-upload-section">
+                <div class="current-avatar">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="Avatar" class="avatar-preview">
+                    {% else %}
+                        <div class="avatar-placeholder">{{ user.username|make_list|first|upper }}</div>
+                    {% endif %}
+                </div>
+                <div class="upload-controls">
+                    <label class="btn btn-secondary">
+                        <i class="fas fa-camera"></i> Change Avatar
+                        <input type="file" name="avatar" accept="image/*" style="display: none;">
+                    </label>
+                    <p class="text-xs text-gray mt-1">Recommended size: 256x256px. JPG, PNG or GIF.</p>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control">
+                </div>
+                <div class="form-group flex-1">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}" class="form-control">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Bio</label>
+                <textarea name="bio" rows="4" class="form-control" placeholder="Tell clients about yourself...">{{ user.bio }}</textarea>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="form-group">
+                <label>NID / TIN Number</label>
+                <input type="text" name="nid" value="{{ user.nid_tin_number }}" class="form-control" placeholder="Required for verification">
+            </div>
+            
+            <div class="form-actions mt-4">
+                <button type="submit" class="btn btn-purple"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

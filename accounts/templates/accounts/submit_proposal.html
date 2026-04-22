@@ -1,0 +1,40 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}Submit Proposal - SkillCurrency{% endblock %}
+
+{% block content %}
+<div class="auth-container mt-5">
+    <h2>Submit a Proposal</h2>
+    <p class="text-sm" style="color: #6b7280; text-align: center; margin-bottom: 2rem;">Pitch yourself for: <strong>{{ job.title }}</strong></p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-danger">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="job-summary-box mb-4 p-3" style="background: #f3f4f6; border-radius: 8px;">
+        <p class="text-sm"><strong>Client Budget/Terms:</strong> {{ job.budget_or_terms }}</p>
+    </div>
+
+    <form method="POST" action="{% url 'submit_proposal' job.id %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="proposed_terms">Your Proposed Terms</label>
+            <input type="text" id="proposed_terms" name="proposed_terms" class="form-control" required placeholder="e.g. I will do this for $450 or 'I accept your barter'">
+        </div>
+        
+        <div class="form-group">
+            <label for="cover_letter">Cover Letter</label>
+            <textarea id="cover_letter" name="cover_letter" class="form-control" rows="6" required placeholder="Why are you the best fit for this job? Highlight your skills and experience..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-purple btn-block">Submit Proposal</button>
+        <div style="text-align: center; margin-top: 1rem;">
+            <a href="{% url 'job_detail' job.id %}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block title %}My Activity - SkillCurrency{% endblock %}
+
+{% block content %}
+<div class="marketplace-layout">
+    <div class="marketplace-sidebar">
+        <h3>My Activity</h3>
+        <p class="text-sm">Manage your job postings and submitted proposals.</p>
+        
+        <div class="mt-4">
+            <a href="{% url 'marketplace_feed' %}" class="btn btn-secondary btn-block">&larr; Back to Market</a>
+        </div>
+    </div>
+
+    <div class="marketplace-main">
+        <div class="marketplace-header">
+            <h2>My Dashboard</h2>
+        </div>
+
+        {% if user.role != 'Skilled' %}
+            <div class="activity-section mb-5">
+                <h3>Jobs I've Posted ({{ posted_jobs.count }})</h3>
+                <div class="job-grid">
+                    {% for job in posted_jobs %}
+                        <div class="job-card">
+                            <div class="job-card-header">
+                                <span class="job-type {% if job.interaction_type == 'Paid Service' %}type-paid{% else %}type-barter{% endif %}">{{ job.interaction_type }}</span>
+                                <span class="status-pill {% if job.status == 'Open' %}status-progress{% else %}status-pending{% endif %}">{{ job.status }}</span>
+                            </div>
+                            <h3 class="job-title"><a href="{% url 'job_detail' job.id %}">{{ job.title }}</a></h3>
+                            <p class="text-sm mt-2"><strong>Proposals Received:</strong> {{ job.proposals.count }}</p>
+                            <div class="job-card-footer mt-3">
+                                <span class="job-date">{{ job.created_at|timesince }} ago</span>
+                                <a href="{% url 'job_detail' job.id %}" class="btn btn-purple btn-sm">Manage</a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-sm text-gray">You haven't posted any jobs yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if user.role == 'Skilled' %}
+            <div class="activity-section">
+                <h3>My Submitted Proposals ({{ submitted_proposals.count }})</h3>
+                <div class="job-grid">
+                    {% for prop in submitted_proposals %}
+                        <div class="job-card">
+                            <div class="job-card-header">
+                                <span class="status-pill {% if prop.status == 'Pending' %}status-pending{% else %}status-progress{% endif %}">{{ prop.status }}</span>
+                            </div>
+                            <h3 class="job-title"><a href="{% url 'job_detail' prop.job.id %}">For: {{ prop.job.title }}</a></h3>
+                            <p class="text-sm mt-2"><strong>My Terms:</strong> {{ prop.proposed_terms }}</p>
+                            <div class="job-card-footer mt-3">
+                                <span class="job-date">{{ prop.created_at|timesince }} ago</span>
+                                <a href="{% url 'job_detail' prop.job.id %}" class="btn btn-secondary btn-sm">View Job</a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-sm text-gray">You haven't submitted any proposals yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
