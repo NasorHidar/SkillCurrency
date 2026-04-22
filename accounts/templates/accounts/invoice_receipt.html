@@ -1,222 +1,113 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice {{ transaction.reference_id }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f3f4f6;
-            margin: 0;
-            padding: 2rem;
-            color: #1f2937;
-        }
-        .invoice-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 3rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .invoice-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #f3f4f6;
-            padding-bottom: 2rem;
-            margin-bottom: 2rem;
-        }
-        .brand h1 {
-            color: #a855f7;
-            margin: 0 0 0.5rem 0;
-            font-size: 2rem;
-        }
-        .invoice-meta {
-            text-align: right;
-        }
-        .invoice-meta h2 {
-            margin: 0 0 0.5rem 0;
-            color: #4b5563;
-        }
-        .meta-row {
-            margin: 0.25rem 0;
-            font-size: 0.9rem;
-            color: #6b7280;
-        }
-        .details-section {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 3rem;
-        }
-        .details-box {
-            flex: 1;
-        }
-        .details-box h3 {
-            font-size: 1rem;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 1rem;
-        }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 2rem;
-        }
-        .data-table th {
-            text-align: left;
-            padding: 1rem;
-            background: #faf5ff;
-            color: #6b21a8;
-            font-weight: 600;
-        }
-        .data-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .totals-section {
-            display: flex;
-            justify-content: flex-end;
-        }
-        .totals-box {
-            width: 300px;
-        }
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-        }
-        .grand-total {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #a855f7;
-            border-top: 2px solid #f3f4f6;
-            padding-top: 1rem;
-            margin-top: 0.5rem;
-        }
-        .footer {
-            margin-top: 4rem;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 0.85rem;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 2rem;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: #dcfce7;
-            color: #166534;
-        }
-        @media print {
-            body { background: white; padding: 0; }
-            .invoice-container { box-shadow: none; max-width: 100%; padding: 0; }
-            .no-print { display: none; }
-        }
-    </style>
-</head>
-<body>
+{% extends 'accounts/base.html' %}
+{% block title %}Invoice #{{ transaction.reference_id }} – SkillCurrency{% endblock %}
+{% block content %}
+<style>
+.inv-wrap{min-height:80vh;background:#f8f3ff;padding:4rem 5%;}
+.inv-card{max-width:800px;margin:0 auto;background:#fff;border-radius:24px;border:1.5px solid #f0e7ff;box-shadow:0 10px 40px rgba(168,85,247,0.1);overflow:hidden;}
+.inv-header{padding:3rem;background:linear-gradient(135deg,#1a0038,#3b0764);color:#fff;display:flex;justify-content:space-between;align-items:flex-start;}
+.inv-logo{display:flex;align-items:center;gap:0.75rem;}
+.inv-logo img{width:40px;height:40px;}
+.inv-logo span{font-size:1.5rem;font-weight:900;letter-spacing:-0.02em;}
+.inv-title{text-align:right;}
+.inv-title h1{font-size:2.5rem;font-weight:900;margin:0;opacity:0.9;}
+.inv-title p{margin:5px 0 0;font-size:1rem;color:#c4b5fd;font-weight:700;}
 
-<div class="invoice-container">
-    <div class="no-print" style="margin-bottom: 2rem;">
-        <button onclick="window.print()" style="background: #a855f7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600;">
-            <i class="fas fa-print"></i> Print / Save PDF
-        </button>
-        <a href="{% url 'financial_hub' %}" style="color: #6b7280; text-decoration: none; margin-left: 1rem;">Back to Hub</a>
+.inv-body{padding:3rem;}
+.inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-bottom:3rem;}
+.inv-info-block h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:#a855f7;margin-bottom:0.75rem;font-weight:800;}
+.inv-info-block p{font-size:1rem;color:#1f0045;font-weight:700;margin:0;line-height:1.5;}
+.inv-info-block span{display:block;font-size:0.85rem;color:#6b7280;font-weight:500;}
+
+.inv-table{width:100%;border-collapse:collapse;margin-bottom:3rem;}
+.inv-table th{text-align:left;padding:1rem;background:#faf5ff;color:#a855f7;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;border-bottom:2px solid #f0e7ff;}
+.inv-table td{padding:1.5rem 1rem;border-bottom:1px solid #f0e7ff;font-size:1rem;color:#1f0045;font-weight:600;}
+.inv-table .inv-total-row td{border-bottom:none;background:#faf5ff;font-size:1.25rem;font-weight:900;}
+
+.inv-footer{padding:2rem 3rem;background:#faf5ff;border-top:1px solid #f0e7ff;text-align:center;}
+.inv-footer p{font-size:0.85rem;color:#9ca3af;margin:0;}
+.inv-print-btn{display:inline-flex;align-items:center;gap:0.5rem;background:#7c3aed;color:#fff;padding:0.75rem 1.5rem;border-radius:12px;font-weight:700;text-decoration:none;margin-top:2rem;transition:0.2s;}
+.inv-print-btn:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(124,58,237,0.3);}
+
+@media print{
+    header, footer, .inv-print-btn, #back-to-hub{display:none !important;}
+    .inv-wrap{padding:0;}
+    .inv-card{box-shadow:none;border:none;}
+}
+</style>
+
+<div class="inv-wrap">
+    <div style="max-width:800px;margin:0 auto 1.5rem;display:flex;justify-content:space-between;align-items:center;">
+        <a href="{% url 'financial_hub' %}" id="back-to-hub" style="color:#7c3aed;text-decoration:none;font-weight:700;display:flex;align-items:center;gap:0.5rem;">
+            <i class="fas fa-arrow-left"></i> Back to Financial Hub
+        </a>
+        <button onclick="window.print()" class="inv-print-btn" style="margin:0;"><i class="fas fa-print"></i> Print Invoice</button>
     </div>
 
-    <div class="invoice-header">
-        <div class="brand">
-            <h1>SkillCurrency</h1>
-            <p style="margin: 0; color: #6b7280;">Secure Payments Ledger</p>
-        </div>
-        <div class="invoice-meta">
-            <h2>INVOICE / RECEIPT</h2>
-            <div class="meta-row"><strong>Ref #:</strong> {{ transaction.reference_id }}</div>
-            <div class="meta-row"><strong>Date:</strong> {{ transaction.timestamp|date:"M d, Y H:i" }}</div>
-            <div class="meta-row">
-                <span class="status-badge">{{ transaction.status }}</span>
+    <div class="inv-card">
+        <div class="inv-header">
+            <div class="inv-logo">
+                <img src="{% static 'images/logo.png' %}" alt="logo">
+                <span>SkillCurrency</span>
+            </div>
+            <div class="inv-title">
+                <h1>INVOICE</h1>
+                <p>#{{ transaction.reference_id }}</p>
             </div>
         </div>
-    </div>
 
-    <div class="details-section">
-        <div class="details-box">
-            <h3>Billed To</h3>
-            <strong>{{ transaction.user.username }}</strong><br>
-            Role: {{ transaction.user.role }}<br>
-            SkillCurrency Platform User
-        </div>
-        <div class="details-box" style="text-align: right;">
-            <h3>Payment Info</h3>
-            <strong>Method:</strong> {{ transaction.payment_method }}<br>
-            <strong>Type:</strong> {{ transaction.transaction_type }}
-        </div>
-    </div>
-
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Description</th>
-                <th style="text-align: right;">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{{ transaction.description }}</td>
-                <td style="text-align: right;">
-                    {% if transaction.amount < 0 %}
-                        -${{ transaction.amount|stringformat:"f"|slice:"1:" }}
-                    {% else %}
-                        ${{ transaction.amount|floatformat:2 }}
-                    {% endif %}
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="totals-section">
-        <div class="totals-box">
-            <div class="total-row">
-                <span>Subtotal</span>
-                <span>
-                    {% if transaction.amount < 0 %}
-                        ${{ transaction.amount|stringformat:"f"|slice:"1:" }}
-                    {% else %}
-                        ${{ transaction.amount|floatformat:2 }}
-                    {% endif %}
-                </span>
+        <div class="inv-body">
+            <div class="inv-grid">
+                <div class="inv-info-block">
+                    <h3>Billed To</h3>
+                    <p>{{ transaction.user.get_full_name|default:transaction.user.username }}</p>
+                    <span>{{ transaction.user.email }}</span>
+                    <span>User ID: {{ transaction.user.user_uid }}</span>
+                </div>
+                <div class="inv-info-block" style="text-align:right;">
+                    <h3>Date Issued</h3>
+                    <p>{{ transaction.timestamp|date:"F d, Y" }}</p>
+                    <span>Time: {{ transaction.timestamp|date:"h:i A" }}</span>
+                </div>
             </div>
-            <div class="total-row">
-                <span>Fees</span>
-                <span>$0.00</span>
-            </div>
-            <div class="total-row grand-total">
-                <span>Total</span>
-                <span>
-                    {% if transaction.amount < 0 %}
-                        ${{ transaction.amount|stringformat:"f"|slice:"1:" }}
-                    {% else %}
-                        ${{ transaction.amount|floatformat:2 }}
-                    {% endif %}
-                </span>
+
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th style="text-align:right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>{{ transaction.transaction_type }}</strong><br>
+                            <span style="font-size:0.8rem;color:#6b7280;font-weight:500;">{{ transaction.description }}</span>
+                        </td>
+                        <td style="text-align:right; font-weight:800;">${{ transaction.amount|stringformat:".2f" }}</td>
+                    </tr>
+                    <tr class="inv-total-row">
+                        <td style="text-align:right; color:#a855f7;">Total Amount</td>
+                        <td style="text-align:right; color:#7c3aed;">${{ transaction.amount|stringformat:".2f" }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="display:flex; gap:2rem;">
+                <div class="inv-info-block">
+                    <h3>Payment Method</h3>
+                    <p>{{ transaction.payment_method }}</p>
+                </div>
+                <div class="inv-info-block">
+                    <h3>Status</h3>
+                    <p style="color:{% if transaction.status == 'Completed' %}#15803d{% else %}#92400e{% endif %};">{{ transaction.status }}</p>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="footer">
-        <p>Thank you for using SkillCurrency! For support, contact billing@skillcurrency.com</p>
-        <p>This is a computer-generated document. No signature is required.</p>
+        <div class="inv-footer">
+            <p>Thank you for using SkillCurrency. This is a computer-generated invoice and does not require a signature.</p>
+            <p style="margin-top:0.5rem;">SkillCurrency Inc. • Dhaka, Bangladesh • hello@skillcurrency.io</p>
+        </div>
     </div>
 </div>
-
-</body>
-</html>
+{% endblock %}

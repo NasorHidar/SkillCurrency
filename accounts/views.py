@@ -978,3 +978,221 @@ def user_search(request):
 def search_users(request):
     return user_search(request)
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TASK 1 — Static Pages: About & Contact
+# ══════════════════════════════════════════════════════════════════════════════
+
+def about_page(request):
+    team_members = [
+        {"name": "Arafat Hossain", "role": "Lead Architect", "dept": "CSE, SUST", "initial": "AH"},
+        {"name": "Nusrat Jahan", "role": "UI/UX Designer", "dept": "CSE, SUST", "initial": "NJ"},
+        {"name": "Rakib Islam", "role": "Backend Engineer", "dept": "CSE, SUST", "initial": "RI"},
+        {"name": "Mehedi Hasan", "role": "Product Manager", "dept": "CSE, SUST", "initial": "MH"},
+    ]
+    return render(request, 'accounts/about.html', {'team_members': team_members})
+
+
+def contact_page(request):
+    if request.method == 'POST':
+        name    = request.POST.get('name', '').strip()
+        email   = request.POST.get('email', '').strip()
+        subject = request.POST.get('subject', '').strip()
+        body    = request.POST.get('body', '').strip()
+        # In production: send email via django.core.mail.send_mail
+        # For now, just acknowledge.
+        messages.success(request, f"Thanks {name}! We received your message and will reply to {email} shortly.")
+        return redirect('contact_page')
+    return render(request, 'accounts/contact.html')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TASK 4 — Stripe Payment Gateway
+# ══════════════════════════════════════════════════════════════════════════════
+
+import os
+from decimal import Decimal
+
+def _get_stripe():
+    """Lazy-import stripe so the app still boots without it installed."""
+    try:
+        import stripe as _stripe
+        _stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
+        return _stripe
+    except ImportError:
+        return None
+
+
+@login_required
+def stripe_create_checkout(request):
+    """Create a Stripe Checkout Session and redirect user to hosted payment page."""
+    stripe = _get_stripe()
+    if stripe is None:
+        messages.error(request, "Stripe is not installed. Run: pip install stripe")
+        return redirect('financial_hub')
+
+    if not stripe.api_key:
+        messages.error(request, "STRIPE_SECRET_KEY is not configured in your .env file.")
+        return redirect('financial_hub')
+
+    try:
+        amount_str = request.POST.get('amount', '0')
+        amount = Decimal(amount_str)
+        if amount < Decimal('1'):
+            messages.error(request, "Minimum top-up amount is $1.00")
+            return redirect('financial_hub')
+
+        # Stripe expects amounts in cents (integer)
+        amount_cents = int(amount * 100)
+
+        domain = request.build_absolute_uri('/').rstrip('/')
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            mode='payment',
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'SkillCurrency Wallet Top-Up',
+                        'description': f'Add ${amount} to your SkillCurrency wallet',
+                    },
+                    'unit_amount': amount_cents,
+                },
+                'quantity': 1,
+            }],
+            metadata={
+                'user_id': str(request.user.id),
+                'amount': str(amount),
+            },
+            success_url=f"{domain}/financial-hub/stripe/success/?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{domain}/financial-hub/stripe/cancel/",
+        )
+        return redirect(session.url, permanent=False)
+
+    except Exception as e:
+        messages.error(request, f"Payment error: {str(e)}")
+        return redirect('financial_hub')
+
+
+@login_required
+def stripe_success(request):
+    """Verify payment was successful and credit the wallet."""
+    stripe = _get_stripe()
+    if stripe is None:
+        return redirect('financial_hub')
+
+    session_id = request.GET.get('session_id', '')
+    if not session_id:
+        messages.error(request, "Invalid payment session.")
+        return redirect('financial_hub')
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status == 'paid':
+            amount = Decimal(session.metadata.get('amount', '0'))
+            user_id = int(session.metadata.get('user_id', '0'))
+
+            # Guard: only credit the logged-in user's wallet
+            if request.user.id != user_id:
+                messages.error(request, "Session mismatch.")
+                return redirect('financial_hub')
+
+            # Check if this session was already credited (idempotency)
+            ref_id = f"STRIPE-{session.payment_intent}"
+            if not Transaction.objects.filter(reference_id=ref_id).exists():
+                from django.db import transaction as db_tx
+                from django.db.models import F
+                with db_tx.atomic():
+                    user = CustomUser.objects.select_for_update().get(id=request.user.id)
+                    user.wallet_balance = F('wallet_balance') + amount
+                    user.save()
+
+                    Transaction.objects.create(
+                        user=user,
+                        amount=amount,
+                        transaction_type='Deposit',
+                        payment_method='SSLCommerz',  # reusing existing choice
+                        status='Completed',
+                        reference_id=ref_id,
+                        description=f"Stripe card payment — ${amount} wallet top-up",
+                    )
+
+                    create_notification(
+                        user=user,
+                        message=f"${amount} added to your wallet via Stripe!",
+                        link="/financial-hub/",
+                    )
+
+            messages.success(request, f"Payment successful! ${amount} has been added to your wallet.")
+    except Exception as e:
+        messages.error(request, f"Could not verify payment: {str(e)}")
+
+    return redirect('financial_hub')
+
+
+@login_required
+def stripe_cancel(request):
+    messages.warning(request, "Payment was cancelled. No funds were deducted.")
+    return redirect('financial_hub')
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+
+@csrf_exempt
+def stripe_webhook(request):
+    """
+    Stripe sends POST events here.
+    Handles checkout.session.completed to credit wallets server-side.
+    Register this URL in your Stripe Dashboard → Webhooks.
+    """
+    stripe = _get_stripe()
+    if stripe is None:
+        return HttpResponse(status=500)
+
+    webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+
+    try:
+        if webhook_secret:
+            event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+        else:
+            import json
+            event = stripe.Event.construct_from(json.loads(payload), stripe.api_key)
+    except Exception:
+        return HttpResponse(status=400)
+
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        if session.get('payment_status') == 'paid':
+            try:
+                amount = Decimal(session['metadata']['amount'])
+                user_id = int(session['metadata']['user_id'])
+                ref_id = f"STRIPE-{session['payment_intent']}"
+
+                if not Transaction.objects.filter(reference_id=ref_id).exists():
+                    from django.db import transaction as db_tx
+                    from django.db.models import F
+                    with db_tx.atomic():
+                        user = CustomUser.objects.select_for_update().get(id=user_id)
+                        user.wallet_balance = F('wallet_balance') + amount
+                        user.save()
+                        Transaction.objects.create(
+                            user=user,
+                            amount=amount,
+                            transaction_type='Deposit',
+                            payment_method='SSLCommerz',
+                            status='Completed',
+                            reference_id=ref_id,
+                            description=f"Stripe webhook — ${amount} wallet credit",
+                        )
+                        create_notification(
+                            user=user,
+                            message=f"${amount} added to your wallet via Stripe!",
+                            link="/financial-hub/",
+                        )
+            except Exception:
+                return HttpResponse(status=500)
+
+    return HttpResponse(status=200)

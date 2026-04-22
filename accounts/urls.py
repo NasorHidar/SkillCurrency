@@ -39,4 +39,14 @@ urlpatterns = [
     # Settings & Notifications
     path('settings/', views.settings_page, name='settings_page'),
     path('notification/<int:notif_id>/read/', views.mark_notification_read, name='mark_notification_read'),
+
+    # Static pages
+    path('about/', views.about_page, name='about_page'),
+    path('contact/', views.contact_page, name='contact_page'),
+
+    # Stripe / Payment
+    path('financial-hub/stripe/checkout/', views.stripe_create_checkout, name='stripe_checkout'),
+    path('financial-hub/stripe/success/', views.stripe_success, name='stripe_success'),
+    path('financial-hub/stripe/cancel/', views.stripe_cancel, name='stripe_cancel'),
+    path('financial-hub/stripe/webhook/', views.stripe_webhook, name='stripe_webhook'),
 ]

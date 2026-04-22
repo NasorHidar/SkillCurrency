@@ -1,158 +1,192 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
-
-{% block title %}Financial Hub - SkillCurrency{% endblock %}
-
+{% block title %}Financial Hub – SkillCurrency{% endblock %}
 {% block content %}
-<div class="financial-layout">
-    <div class="financial-header">
-        <h2><i class="fas fa-wallet" style="color: var(--primary-accent);"></i> Financial Hub</h2>
-        <p>Manage your wallet, view transactions, and top up your funds securely.</p>
-    </div>
+<style>
+.fin-wrap{min-height:100vh;background:#f8f3ff;padding-bottom:4rem;}
+.fin-hero{background:linear-gradient(135deg,#1a0038,#3b0764 50%,#7c3aed);padding:3rem 5%;position:relative;overflow:hidden;}
+.fin-hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(168,85,247,.25),transparent 65%);pointer-events:none;}
+.fin-hero-inner{max-width:1100px;margin:0 auto;z-index:1;position:relative;display:flex;justify-content:space-between;align-items:center;gap:2rem;}
+.fin-balance-card{background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);border-radius:24px;padding:2rem;color:#fff;min-width:300px;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+.fin-balance-label{font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1em;color:#c4b5fd;font-weight:700;margin-bottom:0.5rem;}
+.fin-balance-amt{font-size:3rem;font-weight:900;margin:0;display:flex;align-items:baseline;gap:0.25rem;}
+.fin-balance-amt span{font-size:1.5rem;font-weight:600;opacity:0.8;}
+.fin-hero-actions{display:flex;gap:1rem;}
+.fin-btn-topup{background:#fff;color:#7c3aed;padding:0.75rem 1.5rem;border-radius:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:0.5rem;transition:0.2s;}
+.fin-btn-topup:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,0.2);}
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}">
-                {{ message }}
+.fin-layout{max-width:1100px;margin:-2rem auto 0;padding:0 5%;display:grid;grid-template-columns:1.5fr 1fr;gap:2rem;position:relative;z-index:2;}
+.fin-card{background:#fff;border-radius:24px;border:1.5px solid #f0e7ff;box-shadow:0 4px 25px rgba(168,85,247,0.08);overflow:hidden;}
+.fin-ch{padding:1.5rem;border-bottom:1px solid #f0e7ff;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#faf5ff,#f3e8ff);}
+.fin-ct{font-size:1.1rem;font-weight:800;color:#1f0045;display:flex;align-items:center;gap:0.6rem;}
+.fin-ct i{color:#a855f7;}
+.fin-cb{padding:1.5rem;}
+
+/* Transaction List */
+.tx-item{display:flex;align-items:center;justify-content:space-between;padding:1rem 0;border-bottom:1px solid #f3e8ff;}
+.tx-item:last-child{border-bottom:none;}
+.tx-info{display:flex;align-items:center;gap:1rem;}
+.tx-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+.tx-icon.deposit{background:#dcfce7;color:#15803d;}
+.tx-icon.withdrawal{background:#fee2e2;color:#991b1b;}
+.tx-icon.payment{background:#e0e7ff;color:#3730a3;}
+.tx-details h4{margin:0;font-size:0.95rem;font-weight:700;color:#1f0045;}
+.tx-details p{margin:2px 0 0;font-size:0.75rem;color:#6b7280;}
+.tx-amt{text-align:right;}
+.tx-amt-val{font-size:1rem;font-weight:800;display:block;}
+.tx-amt-val.pos{color:#15803d;}
+.tx-amt-val.neg{color:#991b1b;}
+.tx-status{font-size:0.7rem;font-weight:700;text-transform:uppercase;padding:0.2rem 0.5rem;border-radius:20px;margin-top:2px;display:inline-block;}
+.tx-status.completed{background:#dcfce7;color:#15803d;}
+.tx-status.pending{background:#fef9c3;color:#92400e;}
+
+/* Top-up Options */
+.topup-grid{display:grid;grid-template-columns:1fr;gap:1rem;}
+.topup-method{border:2px solid #f0e7ff;border-radius:16px;padding:1.25rem;cursor:pointer;transition:0.2s;display:flex;align-items:center;gap:1rem;}
+.topup-method:hover{border-color:#a855f7;background:#faf5ff;}
+.topup-method.active{border-color:#a855f7;background:#f3e8ff;box-shadow:0 0 0 4px rgba(168,85,247,0.1);}
+.topup-icon{width:48px;height:48px;object-fit:contain;}
+.topup-name{font-weight:700;color:#1f0045;font-size:1rem;margin-bottom:2px;}
+.topup-desc{font-size:0.75rem;color:#6b7280;}
+
+.amt-presets{display:flex;gap:0.5rem;margin:1rem 0;}
+.amt-preset{flex:1;padding:0.5rem;border:1.5px solid #e9d5ff;border-radius:10px;background:#fff;color:#7c3aed;font-weight:700;font-size:0.9rem;cursor:pointer;transition:0.2s;}
+.amt-preset:hover, .amt-preset.active{background:#7c3aed;color:#fff;border-color:#7c3aed;}
+
+.fin-input{width:100%;border:1.5px solid #e9d5ff;border-radius:12px;padding:0.75rem 1rem;font-size:1rem;font-weight:700;color:#1f0045;outline:none;background:#faf5ff;margin-bottom:1.25rem;}
+.fin-input:focus{border-color:#a855f7;background:#fff;}
+
+.fin-submit{width:100%;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;padding:1rem;border-radius:14px;font-size:1rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.6rem;transition:0.2s;box-shadow:0 4px 15px rgba(168,85,247,0.35);}
+.fin-submit:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(168,85,247,0.45);}
+
+.empty-tx{text-align:center;padding:3rem 0;color:#9ca3af;}
+.empty-tx i{font-size:3rem;margin-bottom:1rem;display:block;}
+
+@media(max-width:900px){.fin-layout{grid-template-columns:1fr;}.fin-hero-inner{flex-direction:column;text-align:center;}}
+</style>
+
+<div class="fin-wrap">
+    <div class="fin-hero">
+        <div class="fin-hero-inner">
+            <div>
+                <h1 style="color:#fff;font-size:2rem;font-weight:900;margin-bottom:0.5rem;">Financial Hub</h1>
+                <p style="color:#c4b5fd;font-size:1rem;">Manage your earnings, payments, and wallet top-ups.</p>
             </div>
-        {% endfor %}
-    {% endif %}
-
-    <div class="financial-cards">
-        <div class="wallet-card">
-            <h3>Total Available Balance</h3>
-            <div class="balance-amount">${{ wallet_balance|floatformat:2 }}</div>
-            <div class="wallet-actions">
-                <button class="btn btn-purple" onclick="document.getElementById('topup-modal').style.display='flex'">
-                    <i class="fas fa-plus-circle"></i> Add Money
-                </button>
-                <button class="btn btn-secondary" onclick="document.getElementById('withdraw-modal').style.display='flex'">
-                    <i class="fas fa-university"></i> Withdraw
-                </button>
+            <div class="fin-balance-card">
+                <div class="fin-balance-label">Total Balance</div>
+                <h2 class="fin-balance-amt"><span>$</span>{{ wallet_balance }}</h2>
+                <div style="margin-top:1.5rem;display:flex;gap:0.75rem;">
+                    <a href="#top-up" class="fin-btn-topup"><i class="fas fa-plus"></i> Add Funds</a>
+                    <button class="fin-btn-topup" style="background:transparent;border:1.5px solid rgba(255,255,255,0.4);color:#fff;" onclick="alert('Withdrawal feature coming soon!')"><i class="fas fa-arrow-up"></i> Withdraw</button>
+                </div>
             </div>
         </div>
-
-        <div class="stats-card">
-            <h3>Quick Stats</h3>
-            <div class="stat-row">
-                <span>Total Transactions:</span>
-                <strong>{{ transactions.count }}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Last Activity:</span>
-                <strong>{% if transactions %}{{ transactions.first.timestamp|date:"M d, Y" }}{% else %}N/A{% endif %}</strong>
-            </div>
-            <div class="stat-row">
-                <span>Current Balance:</span>
-                <strong style="color: #a855f7;">${{ wallet_balance|floatformat:2 }}</strong>
-            </div>
-        </div>
     </div>
 
-    <div class="transactions-section">
-        <h3>Recent Transactions</h3>
-        <div class="table-responsive">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Reference ID</th>
-                        <th>Description</th>
-                        <th>Method</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for txn in transactions %}
-                        <tr>
-                            <td>{{ txn.timestamp|date:"M d, Y H:i" }}</td>
-                            <td><span class="ref-id">{{ txn.reference_id }}</span></td>
-                            <td>{{ txn.description }}</td>
-                            <td>{{ txn.payment_method }}</td>
-                            <td class="{% if txn.amount > 0 %}text-green{% elif txn.amount < 0 %}text-red{% endif %}">
-                                {% if txn.amount > 0 %}+{% endif %}${{ txn.amount|floatformat:2 }}
-                            </td>
-                            <td><span class="status-pill status-{{ txn.status|slugify }}">{{ txn.status }}</span></td>
-                            <td>
-                                {% if txn.status == 'Completed' %}
-                                    <a href="{% url 'invoice_receipt' txn.reference_id %}" class="btn btn-sm btn-secondary" target="_blank">
-                                        <i class="fas fa-file-invoice"></i> Receipt
-                                    </a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="7" style="text-align:center; padding: 2rem; color: #9ca3af;">
-                                No transactions found. <a href="#" onclick="document.getElementById('topup-modal').style.display='flex'; return false;" style="color:#a855f7;">Top up your wallet</a> to get started!
-                            </td>
-                        </tr>
+    <div class="fin-layout">
+        <!-- Transaction History -->
+        <div class="fin-card">
+            <div class="fin-ch">
+                <div class="fin-ct"><i class="fas fa-history"></i> Transaction History</div>
+                <a href="#" style="font-size:0.8rem;color:#7c3aed;font-weight:700;text-decoration:none;">View All</a>
+            </div>
+            <div class="fin-cb">
+                {% if transactions %}
+                    {% for tx in transactions %}
+                    <div class="tx-item">
+                        <div class="tx-info">
+                            <div class="tx-icon {% if tx.transaction_type == 'Deposit' %}deposit{% elif tx.transaction_type == 'Withdrawal' %}withdrawal{% else %}payment{% endif %}">
+                                {% if tx.transaction_type == 'Deposit' %}<i class="fas fa-plus"></i>
+                                {% elif tx.transaction_type == 'Withdrawal' %}<i class="fas fa-minus"></i>
+                                {% else %}<i class="fas fa-exchange-alt"></i>{% endif %}
+                            </div>
+                            <div class="tx-details">
+                                <h4>{{ tx.description|truncatechars:40 }}</h4>
+                                <p>{{ tx.timestamp|date:"M d, Y • h:i A" }} • Ref: {{ tx.reference_id }}</p>
+                            </div>
+                        </div>
+                        <div class="tx-amt">
+                            <span class="tx-amt-val {% if tx.amount > 0 %}pos{% else %}neg{% endif %}">
+                                {% if tx.amount > 0 %}+{% endif %}${{ tx.amount|stringformat:".2f" }}
+                            </span>
+                            <span class="tx-status {{ tx.status|lower }}">{{ tx.status }}</span>
+                        </div>
+                    </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                {% else %}
+                    <div class="empty-tx">
+                        <i class="fas fa-receipt"></i>
+                        <p>No transactions found yet.</p>
+                        <a href="#top-up" style="color:#7c3aed;font-weight:700;text-decoration:none;">Add funds to get started</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Top-up Sidebar -->
+        <div class="fin-card" id="top-up">
+            <div class="fin-ch">
+                <div class="fin-ct"><i class="fas fa-plus-circle"></i> Add Funds</div>
+            </div>
+            <div class="fin-cb">
+                <form id="topup-form" method="POST" action="{% url 'stripe_checkout' %}">
+                    {% csrf_token %}
+                    <label style="font-size:0.85rem;font-weight:800;color:#374151;margin-bottom:0.75rem;display:block;">Select Payment Method</label>
+                    <div class="topup-grid">
+                        <div class="topup-method active" onclick="setMethod('stripe')">
+                            <i class="fas fa-credit-card" style="font-size:2rem;color:#6772e5;"></i>
+                            <div>
+                                <div class="topup-name">Credit/Debit Card</div>
+                                <div class="topup-desc">Secure payment via Stripe</div>
+                            </div>
+                        </div>
+                        <div class="topup-method" onclick="alert('bKash coming soon in next update!')" style="opacity:0.6;cursor:not-allowed;">
+                            <img src="https://www.logo.wine/a/logo/BKash/BKash-Logo.wine.svg" class="topup-icon" alt="bkash">
+                            <div>
+                                <div class="topup-name">bKash</div>
+                                <div class="topup-desc">Popular mobile wallet</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:1.5rem;">
+                        <label style="font-size:0.85rem;font-weight:800;color:#374151;margin-bottom:0.5rem;display:block;">Amount to Add ($)</label>
+                        <div class="amt-presets">
+                            <button type="button" class="amt-preset" onclick="setAmt(10)">$10</button>
+                            <button type="button" class="amt-preset active" onclick="setAmt(50)">$50</button>
+                            <button type="button" class="amt-preset" onclick="setAmt(100)">$100</button>
+                            <button type="button" class="amt-preset" onclick="setAmt(500)">$500</button>
+                        </div>
+                        <input type="number" name="amount" id="topup-amt" value="50" min="1" step="1" class="fin-input">
+                    </div>
+
+                    <button type="submit" class="fin-submit">
+                        <i class="fas fa-lock"></i> Secure Top Up Now
+                    </button>
+                    
+                    <p style="text-align:center;font-size:0.75rem;color:#9ca3af;margin-top:1rem;">
+                        <i class="fas fa-shield-alt"></i> Payments are processed securely via SSL encryption.
+                    </p>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- ══ Top-Up Modal ══ -->
-<div id="topup-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-plus-circle" style="color:#a855f7;"></i> Top Up Wallet</h3>
-            <button onclick="document.getElementById('topup-modal').style.display='none'" class="close-btn">&times;</button>
-        </div>
-        <form method="POST" action="{% url 'top_up_wallet' %}" style="margin-top: 1.5rem;">
-            {% csrf_token %}
-            <div class="form-group">
-                <label>Select Payment Gateway</label>
-                <select name="payment_method" class="form-control" required>
-                    <option value="bKash">bKash (Simulated)</option>
-                    <option value="SSLCommerz">SSLCommerz (Simulated)</option>
-                    <option value="Internal Wallet">Internal Transfer</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-top: 1rem;">
-                <label>Amount (USD)</label>
-                <input type="number" name="amount" min="1" step="0.01" class="form-control" placeholder="e.g. 100.00" required>
-            </div>
-            <button type="submit" class="btn btn-purple btn-block" style="margin-top: 1.25rem;">
-                <i class="fas fa-paper-plane"></i> Proceed to Payment
-            </button>
-        </form>
-    </div>
-</div>
+<script>
+function setAmt(val) {
+    document.getElementById('topup-amt').value = val;
+    document.querySelectorAll('.amt-preset').forEach(b => {
+        b.classList.toggle('active', b.textContent === '$' + val);
+    });
+}
 
-<!-- ══ Withdraw Modal ══ -->
-<div id="withdraw-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-university" style="color:#a855f7;"></i> Withdraw Funds</h3>
-            <button onclick="document.getElementById('withdraw-modal').style.display='none'" class="close-btn">&times;</button>
-        </div>
-        <p style="margin: 0.75rem 0 1.25rem; color: #6b7280; font-size: 0.9rem;">
-            Available balance: <strong style="color: #111827;">${{ wallet_balance|floatformat:2 }}</strong>
-        </p>
-        <form method="POST" action="{% url 'withdraw_funds' %}">
-            {% csrf_token %}
-            <div class="form-group">
-                <label>Withdrawal Method</label>
-                <select name="payment_method" class="form-control" required>
-                    <option value="bKash">bKash</option>
-                    <option value="SSLCommerz">Bank Transfer (SSLCommerz)</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-top: 1rem;">
-                <label>Amount (USD)</label>
-                <input type="number" name="amount" min="1" step="0.01"
-                       max="{{ wallet_balance }}"
-                       class="form-control" placeholder="e.g. 50.00" required>
-            </div>
-            <button type="submit" class="btn btn-purple btn-block" style="margin-top: 1.25rem;">
-                <i class="fas fa-paper-plane"></i> Request Withdrawal
-            </button>
-        </form>
-    </div>
-</div>
+function setMethod(method) {
+    // For now we only have stripe active
+    const form = document.getElementById('topup-form');
+    if (method === 'stripe') {
+        form.action = "{% url 'stripe_checkout' %}";
+    }
+}
+</script>
 {% endblock %}

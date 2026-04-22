@@ -1,0 +1,107 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+{% block title %}About Us – SkillCurrency{% endblock %}
+{% block content %}
+<style>
+.ab-hero{background:linear-gradient(135deg,#1a0038,#3b0764 55%,#7c3aed);padding:5rem 5% 4rem;text-align:center;position:relative;overflow:hidden;}
+.ab-hero::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(168,85,247,.15),transparent 70%);top:-150px;right:-100px;}
+.ab-hero-tag{display:inline-flex;align-items:center;gap:.4rem;background:rgba(168,85,247,.3);border:1px solid rgba(168,85,247,.5);color:#e9d5ff;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.35rem .9rem;border-radius:20px;margin-bottom:1.2rem;}
+.ab-hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:900;color:#fff;line-height:1.15;margin:0 0 1rem;letter-spacing:-.02em;}
+.ab-hero h1 span{background:linear-gradient(135deg,#e879f9,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ab-hero p{font-size:1.05rem;color:#c4b5fd;max-width:600px;margin:0 auto;line-height:1.75;}
+.ab-body{max-width:1100px;margin:0 auto;padding:4rem 5%;}
+.ab-mission{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;margin-bottom:4rem;}
+.ab-mission-text h2{font-size:1.8rem;font-weight:800;color:#1f0045;margin:0 0 1rem;}
+.ab-mission-text h2 span{color:#a855f7;}
+.ab-mission-text p{color:#4b5563;line-height:1.8;font-size:.95rem;margin-bottom:1rem;}
+.ab-mission-img{background:linear-gradient(135deg,#faf5ff,#f3e8ff);border-radius:24px;padding:2.5rem;display:flex;flex-direction:column;gap:1rem;border:1.5px solid #e9d5ff;}
+.ab-stat{text-align:center;padding:1.25rem;background:#fff;border-radius:14px;box-shadow:0 2px 10px rgba(168,85,247,.08);}
+.ab-stat-num{font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#a855f7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ab-stat-label{font-size:.82rem;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.ab-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.ab-section-title{text-align:center;margin-bottom:2.5rem;}
+.ab-section-title h2{font-size:1.7rem;font-weight:800;color:#1f0045;margin:0 0 .5rem;}
+.ab-section-title p{color:#6b7280;font-size:.95rem;}
+.ab-values{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.25rem;margin-bottom:4rem;}
+.ab-val{background:#fff;border-radius:18px;border:1.5px solid #f0e7ff;padding:1.75rem;box-shadow:0 2px 10px rgba(168,85,247,.06);transition:.2s;}
+.ab-val:hover{transform:translateY(-4px);box-shadow:0 14px 40px rgba(168,85,247,.14);}
+.ab-val-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#a855f7,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;margin-bottom:1rem;box-shadow:0 4px 12px rgba(168,85,247,.35);}
+.ab-val h3{font-size:1rem;font-weight:700;color:#1f0045;margin:0 0 .4rem;}
+.ab-val p{font-size:.84rem;color:#6b7280;line-height:1.65;margin:0;}
+.ab-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.25rem;margin-bottom:4rem;}
+.ab-member{background:#fff;border-radius:18px;border:1.5px solid #f0e7ff;padding:1.5rem;text-align:center;box-shadow:0 2px 10px rgba(168,85,247,.06);transition:.2s;}
+.ab-member:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(168,85,247,.12);}
+.ab-member-av{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:1.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;border:3px solid #f3e8ff;}
+.ab-member h3{font-size:.95rem;font-weight:700;color:#1f0045;margin:0 0 .2rem;}
+.ab-member p{font-size:.78rem;color:#a855f7;font-weight:600;margin:0 0 .5rem;}
+.ab-member small{font-size:.74rem;color:#9ca3af;}
+.ab-cta{background:linear-gradient(135deg,#1a0038,#3b0764);border-radius:24px;padding:3rem;text-align:center;color:#fff;}
+.ab-cta h2{font-size:1.8rem;font-weight:800;margin:0 0 .75rem;}
+.ab-cta p{color:#c4b5fd;margin:0 0 1.75rem;font-size:.95rem;}
+.ab-cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+.ab-cta-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 2rem;border-radius:12px;font-weight:700;font-size:.92rem;text-decoration:none;transition:.2s;}
+.ab-cta-btn.primary{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;box-shadow:0 4px 16px rgba(168,85,247,.4);}
+.ab-cta-btn.secondary{border:1.5px solid rgba(168,85,247,.5);color:#e9d5ff;}
+.ab-cta-btn:hover{transform:translateY(-2px);}
+@media(max-width:800px){.ab-mission{grid-template-columns:1fr;}.ab-stat-row{grid-template-columns:1fr 1fr;}}
+</style>
+
+<div class="ab-hero">
+  <div class="ab-hero-tag"><i class="fas fa-rocket"></i> Our Story</div>
+  <h1>Empowering the Youth of<br><span>Bangladesh to Thrive</span></h1>
+  <p>SkillCurrency is a next-generation freelance marketplace built to connect talented individuals, reward verified skills, and enable fair economic participation.</p>
+</div>
+
+<div class="ab-body">
+
+  <!-- Mission -->
+  <div class="ab-mission">
+    <div class="ab-mission-text">
+      <h2>Our <span>Mission</span></h2>
+      <p>We believe that talent is equally distributed but opportunity is not. SkillCurrency bridges that gap by providing a transparent, secure platform where skilled individuals can monetise their expertise and businesses can find trusted professionals.</p>
+      <p>Through our unique skill verification system, barter economy support, and encrypted workspace, we are building an ecosystem where merit drives income — not connections.</p>
+    </div>
+    <div class="ab-mission-img">
+      <div class="ab-stat-row">
+        <div class="ab-stat"><div class="ab-stat-num">2K+</div><div class="ab-stat-label">Active Users</div></div>
+        <div class="ab-stat"><div class="ab-stat-num">500+</div><div class="ab-stat-label">Jobs Posted</div></div>
+        <div class="ab-stat"><div class="ab-stat-num">98%</div><div class="ab-stat-label">Satisfaction</div></div>
+        <div class="ab-stat"><div class="ab-stat-num">৳12M+</div><div class="ab-stat-label">Paid Out</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Values -->
+  <div class="ab-section-title"><h2>What We Stand For</h2><p>The principles that guide every decision we make.</p></div>
+  <div class="ab-values">
+    <div class="ab-val"><div class="ab-val-icon"><i class="fas fa-shield-alt"></i></div><h3>Trust & Verification</h3><p>Every skilled user goes through our identity verification process before they can apply for paid work.</p></div>
+    <div class="ab-val"><div class="ab-val-icon"><i class="fas fa-balance-scale"></i></div><h3>Fair Economy</h3><p>Our barter system lets users exchange services regardless of cash, creating true skill-for-skill value.</p></div>
+    <div class="ab-val"><div class="ab-val-icon"><i class="fas fa-lock"></i></div><h3>Privacy First</h3><p>All workspace messages are end-to-end encrypted. We never sell or share your personal data.</p></div>
+    <div class="ab-val"><div class="ab-val-icon"><i class="fas fa-graduation-cap"></i></div><h3>Skill Growth</h3><p>Our Skill Lab lets users take AI-powered assessments, earn badges, and level up their professional profile.</p></div>
+  </div>
+
+  <!-- Team -->
+  <div class="ab-section-title"><h2>The Team</h2><p>Built by students who believe technology can create opportunity.</p></div>
+  <div class="ab-team">
+    {% for member in team_members %}
+    <div class="ab-member">
+      <div class="ab-member-av">{{ member.initial }}</div>
+      <h3>{{ member.name }}</h3>
+      <p>{{ member.role }}</p>
+      <small>{{ member.dept }}</small>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- CTA -->
+  <div class="ab-cta">
+    <h2>Ready to Join the Movement?</h2>
+    <p>Create a free account, get verified, and start earning from your skills today.</p>
+    <div class="ab-cta-btns">
+      <a href="{% url 'signup' %}" class="ab-cta-btn primary"><i class="fas fa-rocket"></i> Get Started Free</a>
+      <a href="{% url 'contact_page' %}" class="ab-cta-btn secondary"><i class="fas fa-envelope"></i> Contact Us</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
