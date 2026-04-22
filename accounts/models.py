@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+import uuid
+from django.utils import timezone
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -19,12 +21,17 @@ class CustomUser(AbstractUser):
     nid_tin_number = models.CharField(max_length=50, blank=True, null=True)
     is_identity_verified = models.BooleanField(default=False)
     wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    rating = models.DecimalField(max_digits=3, decimal_places=1, default=4.9) # Mock default for search
+
     
     id_document = models.FileField(upload_to='identity_docs/', blank=True, null=True)
     verification_status = models.CharField(max_length=20, choices=VERIFICATION_CHOICES, default='Unverified')
     
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
+
+    # Unique User ID — format: SC-YYYYMM-XXXXX
+    user_uid = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -45,8 +52,12 @@ class SkillBadge(models.Model):
     class Meta:
         unique_together = ('user', 'category')
 
+    @property
+    def badge_label(self):
+        return f"Skilled at {self.category.name}"
+
     def __str__(self):
-        return f"{self.user.username} - {self.category.name} (Lvl {self.level})"
+        return f"{self.user.username} - Skilled at {self.category.name} (Lvl {self.level})"
 
 class AssessmentQuestion(models.Model):
     category = models.ForeignKey(SkillCategory, on_delete=models.CASCADE, related_name='questions')
@@ -97,6 +108,7 @@ class JobProposal(models.Model):
     job = models.ForeignKey(JobPost, on_delete=models.CASCADE, related_name='proposals')
     applicant = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='submitted_proposals')
     cover_letter = models.TextField()
+    cv_file = models.FileField(upload_to='cvs/', blank=True, null=True)
     proposed_terms = models.CharField(max_length=255)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)

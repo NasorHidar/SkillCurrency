@@ -6,6 +6,8 @@
 {% block content %}
 <div class="job-detail-layout">
     <div class="job-detail-main">
+        {% include 'accounts/includes/back_button.html' %}
+        
         {% if messages %}
             {% for message in messages %}
                 <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}">
@@ -78,7 +80,38 @@
 
             {% if request.user.is_authenticated and request.user != job.author %}
                 <div class="mt-4">
-                    <a href="{% url 'submit_proposal' job.id %}" class="btn btn-purple btn-block">Submit a Proposal</a>
+                    {% if user_has_proposed %}
+                        <div class="alert alert-success" style="padding: 1rem; border-radius: 8px;">
+                            <i class="fas fa-check-circle"></i> You have already submitted a proposal for this job.
+                        </div>
+                    {% elif request.user.role != 'Skilled' %}
+                        <div class="alert alert-warning" style="padding: 1rem; border-radius: 8px;">
+                            <i class="fas fa-exclamation-triangle"></i> Only verified Skilled users can submit proposals. Switch your role in Settings.
+                        </div>
+                    {% elif not request.user.is_identity_verified %}
+                        <div class="alert alert-warning" style="padding: 1rem; border-radius: 8px;">
+                            <i class="fas fa-id-card"></i> You must verify your identity before submitting proposals.
+                            <a href="{% url 'identity_vault' %}" style="color: #a855f7; text-decoration: underline;">Verify Now</a>
+                        </div>
+                    {% else %}
+                        <h4 style="margin-bottom: 1rem; color: #3b0764; font-weight: 600;">Submit Your Proposal</h4>
+                        <form method="POST" action="{% url 'submit_proposal' job.id %}" enctype="multipart/form-data" class="proposal-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                            {% csrf_token %}
+                            <div>
+                                <label for="proposed_terms" style="font-weight: 500; font-size: 0.9rem; color: #374151;">Proposed Terms</label>
+                                <input type="text" id="proposed_terms" name="proposed_terms" placeholder="e.g. $450 or 'I will do X for Y'" required style="width: 100%; padding: 0.75rem; border: 1px solid #a855f7; border-radius: 8px; margin-top: 0.25rem;">
+                            </div>
+                            <div>
+                                <label for="cover_letter" style="font-weight: 500; font-size: 0.9rem; color: #374151;">Proposal Details</label>
+                                <textarea id="cover_letter" name="cover_letter" rows="4" placeholder="Explain why you are the best fit..." required style="width: 100%; padding: 0.75rem; border: 1px solid #a855f7; border-radius: 8px; margin-top: 0.25rem;"></textarea>
+                            </div>
+                            <div>
+                                <label for="cv_file" style="font-weight: 500; font-size: 0.9rem; color: #374151;">Upload CV/Resume (PDF/DOCX)</label>
+                                <input type="file" id="cv_file" name="cv_file" accept=".pdf,.doc,.docx" style="width: 100%; padding: 0.5rem; border: 1px solid #a855f7; border-radius: 8px; margin-top: 0.25rem; background: #faf5ff;">
+                            </div>
+                            <button type="submit" class="btn" style="background: #a855f7; color: #faf5ff; font-weight: 600; padding: 0.75rem; border-radius: 8px; border: none; width: 100%; transition: background 0.2s;">Submit Proposal</button>
+                        </form>
+                    {% endif %}
                 </div>
             {% elif not request.user.is_authenticated %}
                 <div class="mt-4">

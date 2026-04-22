@@ -342,7 +342,7 @@
 
       {% if user.is_authenticated %}
       <div class="mp-widget" style="display:flex;flex-direction:column;gap:.5rem;">
-        {% if user.role != 'Skilled' %}
+        {% if user.is_staff or user.role == 'Buyer' %}
         <a href="{% url 'create_job' %}" class="mp-sidebar-action mp-action-primary"><i class="fas fa-plus-circle"></i> Post a Job</a>
         {% endif %}
         <a href="{% url 'my_activity' %}" class="mp-sidebar-action mp-action-secondary"><i class="fas fa-clipboard-list"></i> My Activity</a>
