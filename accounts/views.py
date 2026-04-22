@@ -809,32 +809,25 @@ def settings_page(request):
         section = request.POST.get('section', 'public')
 
         if section == 'public':
-            # Public profile section
             first_name = request.POST.get('first_name', '')
             last_name = request.POST.get('last_name', '')
             bio = request.POST.get('bio', '')
             avatar = request.FILES.get('avatar')
-
             user.first_name = first_name
             user.last_name = last_name
             user.bio = bio
-
             if avatar:
                 user.avatar = avatar
-
             user.save()
             messages.success(request, "Public profile updated successfully!")
 
         elif section == 'account':
-            # Account settings section
             email = request.POST.get('email', '')
             nid = request.POST.get('nid', '')
-
             if email:
                 user.email = email
             if nid:
                 user.nid_tin_number = nid
-
             user.save()
             messages.success(request, "Account settings updated successfully!")
 
@@ -855,17 +848,133 @@ def mark_notification_read(request, notif_id):
     return redirect(request.META.get('HTTP_REFERER', 'landing_page'))
 
 
-def search_users(request):
-    """Search for users by full name or username."""
-    query = request.GET.get('q', '').strip()
-    results = []
-    if query:
-        results = CustomUser.objects.filter(
-            Q(username__icontains=query) |
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query)
-        ).exclude(is_superuser=True).order_by('username')[:30]
-    return render(request, 'accounts/user_search_results.html', {
-        'query': query,
-        'results': results,
+# ── Applicant Review Dashboard ─────────────────────────────────────────────
+@login_required
+def applicant_review(request, job_id):
+    job = get_object_or_404(JobPost, id=job_id)
+    if request.user != job.author:
+        messages.error(request, "You are not the author of this job.")
+        return redirect('job_detail', job_id=job_id)
+    proposals = job.proposals.all().select_related('applicant').prefetch_related(
+        'applicant__skill_badges__category'
+    ).order_by('-created_at')
+    return render(request, 'accounts/applicant_review.html', {
+        'job': job,
+        'proposals': proposals,
     })
+
+
+# ── Send Acceptance / Rejection / Message to Applicant ────────────────────
+@login_required
+def send_acceptance_message(request, proposal_id):
+    proposal = get_object_or_404(JobProposal, id=proposal_id)
+    job = proposal.job
+    if request.user != job.author:
+        messages.error(request, "Permission denied.")
+        return redirect('job_detail', job_id=job.id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'message')
+        msg_text = request.POST.get('message', '').strip()
+
+        if action == 'accept' and proposal.status == 'Pending':
+            proposal.status = 'Accepted'
+            proposal.save()
+            # Create Service Agreement
+            agreement = ServiceAgreement.objects.create(
+                proposal=proposal,
+                client=job.author,
+                provider=proposal.applicant
+            )
+            Milestone.objects.create(
+                agreement=agreement,
+                title='Initial Setup & Planning',
+                description='Agree on terms and begin work.',
+                amount=0.00,
+                status='In Progress'
+            )
+            job.status = 'In Progress'
+            job.save()
+            notif_msg = msg_text if msg_text else f"Congratulations! {request.user.username} accepted your proposal for '{job.title}'!"
+            create_notification(
+                user=proposal.applicant,
+                message=notif_msg,
+                link=f"/workspace/{agreement.id}/"
+            )
+            messages.success(request, f"Accepted {proposal.applicant.username}. Workspace created.")
+
+        elif action == 'reject' and proposal.status == 'Pending':
+            proposal.status = 'Rejected'
+            proposal.save()
+            notif_msg = msg_text if msg_text else f"Your proposal for '{job.title}' was not selected this time."
+            create_notification(
+                user=proposal.applicant,
+                message=notif_msg,
+                link=f"/marketplace/job/{job.id}/"
+            )
+            messages.success(request, f"Rejected {proposal.applicant.username}'s proposal.")
+
+        elif action == 'message' and msg_text:
+            create_notification(
+                user=proposal.applicant,
+                message=f"Message from {request.user.username} re: '{job.title}': {msg_text}",
+                link=f"/marketplace/job/{job.id}/"
+            )
+            messages.success(request, "Message sent.")
+
+    return redirect('applicant_review', job_id=job.id)
+
+
+# ── Global User Search ──────────────────────────────────────────────────────
+def user_search(request):
+    query_name   = request.GET.get('name', '').strip()
+    query_skill  = request.GET.get('skill', '').strip()
+    query_uid    = request.GET.get('uid', '').strip()
+    query_min_badges = request.GET.get('min_badges', '').strip()
+    query_role   = request.GET.get('role', '').strip()
+
+    users = CustomUser.objects.exclude(is_superuser=True).prefetch_related(
+        'skill_badges__category'
+    )
+
+    if query_name:
+        users = users.filter(
+            Q(username__icontains=query_name) |
+            Q(first_name__icontains=query_name) |
+            Q(last_name__icontains=query_name)
+        )
+    if query_skill:
+        users = users.filter(skill_badges__category__name__icontains=query_skill)
+    if query_uid:
+        try:
+            users = users.filter(id=int(query_uid))
+        except ValueError:
+            users = users.filter(user_uid__icontains=query_uid)
+    if query_role:
+        users = users.filter(role=query_role)
+    if query_min_badges:
+        try:
+            min_b = int(query_min_badges)
+            from django.db.models import Count
+            users = users.annotate(badge_count=Count('skill_badges')).filter(badge_count__gte=min_b)
+        except ValueError:
+            pass
+
+    users = users.distinct().order_by('username')[:50]
+    categories = SkillCategory.objects.all().order_by('name')
+
+    return render(request, 'accounts/user_search.html', {
+        'users': users,
+        'categories': categories,
+        'query_name': query_name,
+        'query_skill': query_skill,
+        'query_uid': query_uid,
+        'query_min_badges': query_min_badges,
+        'query_role': query_role,
+    })
+
+
+# ── Legacy alias ───────────────────────────────────────────────────────────
+def search_users(request):
+    return user_search(request)
+

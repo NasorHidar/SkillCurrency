@@ -1,40 +1,142 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
-
-{% block title %}Submit Proposal - SkillCurrency{% endblock %}
+{% block title %}Submit Proposal – {{ job.title }} | SkillCurrency{% endblock %}
 
 {% block content %}
-<div class="auth-container mt-5">
-    <h2>Submit a Proposal</h2>
-    <p class="text-sm" style="color: #6b7280; text-align: center; margin-bottom: 2rem;">Pitch yourself for: <strong>{{ job.title }}</strong></p>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-danger">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-
-    <div class="job-summary-box mb-4 p-3" style="background: #f3f4f6; border-radius: 8px;">
-        <p class="text-sm"><strong>Client Budget/Terms:</strong> {{ job.budget_or_terms }}</p>
+<div class="sp-wrap">
+  <div class="sp-hero">
+    <div class="sp-hero-inner">
+      {% include 'accounts/_back_button.html' %}
+      <div class="sp-hero-tag"><i class="fas fa-paper-plane"></i> Submit Proposal</div>
+      <h1>Pitch Yourself</h1>
+      <p>Applying for: <strong>{{ job.title }}</strong> · Budget: <strong>{{ job.budget_or_terms }}</strong></p>
     </div>
+  </div>
 
-    <form method="POST" action="{% url 'submit_proposal' job.id %}">
-        {% csrf_token %}
-        
-        <div class="form-group">
-            <label for="proposed_terms">Your Proposed Terms</label>
-            <input type="text" id="proposed_terms" name="proposed_terms" class="form-control" required placeholder="e.g. I will do this for $450 or 'I accept your barter'">
+  <div class="sp-layout">
+    <!-- Sidebar -->
+    <aside class="sp-sidebar">
+      <div class="sp-widget">
+        <div class="sp-widget-title"><i class="fas fa-briefcase"></i> Job Summary</div>
+        <h3 class="sp-job-title">{{ job.title }}</h3>
+        <p class="sp-job-desc">{{ job.description|truncatechars:200 }}</p>
+        <div class="sp-meta-row"><span class="sp-meta-label">Type</span>
+          <span class="sp-badge {% if job.interaction_type == 'Paid Service' %}sp-badge-paid{% else %}sp-badge-barter{% endif %}">{{ job.interaction_type }}</span>
         </div>
-        
-        <div class="form-group">
-            <label for="cover_letter">Cover Letter</label>
-            <textarea id="cover_letter" name="cover_letter" class="form-control" rows="6" required placeholder="Why are you the best fit for this job? Highlight your skills and experience..."></textarea>
-        </div>
+        <div class="sp-meta-row"><span class="sp-meta-label">Budget/Terms</span><strong class="sp-budget">{{ job.budget_or_terms }}</strong></div>
+        <div class="sp-meta-row"><span class="sp-meta-label">Posted by</span><span>{{ job.author.username }}</span></div>
+      </div>
+      <div class="sp-widget">
+        <div class="sp-widget-title"><i class="fas fa-lightbulb"></i> Tips</div>
+        <ul class="sp-tip-list">
+          <li><i class="fas fa-check-circle"></i> Be specific about your experience</li>
+          <li><i class="fas fa-check-circle"></i> Match the budget/barter terms clearly</li>
+          <li><i class="fas fa-check-circle"></i> Attach an up-to-date CV</li>
+          <li><i class="fas fa-check-circle"></i> Keep your pitch concise</li>
+        </ul>
+      </div>
+    </aside>
 
-        <button type="submit" class="btn btn-purple btn-block">Submit Proposal</button>
-        <div style="text-align: center; margin-top: 1rem;">
-            <a href="{% url 'job_detail' job.id %}">Cancel</a>
+    <!-- Main Form -->
+    <main class="sp-main">
+      {% if messages %}{% for m in messages %}
+        <div class="alert {% if m.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">{{ m }}</div>
+      {% endfor %}{% endif %}
+
+      <div class="sp-card">
+        <div class="sp-card-header">
+          <h2><i class="fas fa-edit"></i> Your Proposal</h2>
         </div>
-    </form>
+        <form method="POST" action="{% url 'submit_proposal' job.id %}" enctype="multipart/form-data" class="sp-form">
+          {% csrf_token %}
+          <div class="sp-field">
+            <label for="proposed_terms">Your Proposed Terms <span class="req">*</span></label>
+            <input type="text" id="proposed_terms" name="proposed_terms" class="sp-input" required placeholder="e.g. 'I'll complete this for $420'">
+          </div>
+          <div class="sp-field">
+            <label for="cover_letter">Cover Letter <span class="req">*</span></label>
+            <textarea id="cover_letter" name="cover_letter" class="sp-input sp-textarea" rows="7" required placeholder="Why are you the best fit? Highlight relevant skills…"></textarea>
+            <div style="text-align:right;font-size:.72rem;color:#9ca3af;"><span id="char-count">0</span> chars</div>
+          </div>
+          <div class="sp-field">
+            <label>Attach CV <span style="color:#9ca3af;font-weight:400;font-size:.78rem;">(optional · PDF, DOC, DOCX · max 5MB)</span></label>
+            <div class="sp-dropzone" id="dropzone" onclick="document.getElementById('cv_file').click()">
+              <i class="fas fa-cloud-upload-alt sp-dz-icon"></i>
+              <p class="sp-dz-text">Click or drag & drop to upload your CV</p>
+              <p class="sp-dz-hint">PDF, DOC, DOCX (max 5 MB)</p>
+              <div id="file-preview" style="display:none;margin-top:.75rem;background:#ede9fe;border-radius:8px;padding:.45rem .75rem;font-size:.82rem;font-weight:600;color:#7c3aed;display:none;align-items:center;gap:.4rem;"></div>
+              <input type="file" id="cv_file" name="cv_file" accept=".pdf,.doc,.docx" style="display:none;">
+            </div>
+          </div>
+          {% if not request.user.is_identity_verified %}
+          <div class="sp-alert-box"><i class="fas fa-exclamation-triangle"></i> Identity <strong>not verified</strong>. <a href="{% url 'identity_vault' %}">Verify now →</a></div>
+          {% endif %}
+          <div class="sp-actions">
+            <a href="{% url 'job_detail' job.id %}" class="sp-cancel-btn">Cancel</a>
+            <button type="submit" class="sp-submit-btn"><i class="fas fa-paper-plane"></i> Submit Proposal</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
 </div>
+
+<style>
+.sp-wrap{min-height:100vh;background:#f8f3ff;}
+.sp-hero{background:linear-gradient(135deg,#1a0038,#3b0764 50%,#7c3aed);padding:2.5rem 5%;position:relative;overflow:hidden;}
+.sp-hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(168,85,247,.25),transparent 65%);pointer-events:none;}
+.sp-hero-inner{max-width:900px;z-index:1;position:relative;}
+.sp-hero-tag{display:inline-flex;align-items:center;gap:.4rem;background:rgba(168,85,247,.3);border:1px solid rgba(168,85,247,.5);color:#e9d5ff;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;padding:.3rem .8rem;border-radius:20px;margin-bottom:.6rem;}
+.sp-hero h1{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;color:#fff;margin:.2rem 0 .4rem;}
+.sp-hero p{color:#c4b5fd;font-size:.92rem;margin:0;}
+.sp-hero strong{color:#fff;}
+.sp-layout{display:grid;grid-template-columns:270px 1fr;gap:1.75rem;max-width:1200px;margin:0 auto;padding:2rem 5%;}
+.sp-sidebar{display:flex;flex-direction:column;gap:1rem;}
+.sp-widget{background:#fff;border-radius:16px;padding:1.25rem 1.5rem;border:1px solid #f0e7ff;box-shadow:0 2px 8px rgba(168,85,247,.06);}
+.sp-widget-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#a855f7;margin-bottom:.9rem;display:flex;align-items:center;gap:.4rem;}
+.sp-job-title{font-size:1rem;font-weight:700;color:#1f0045;margin:0 0 .5rem;}
+.sp-job-desc{font-size:.83rem;color:#6b7280;line-height:1.6;margin-bottom:.75rem;}
+.sp-meta-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid #f9f5ff;font-size:.84rem;color:#374151;}
+.sp-meta-row:last-child{border:none;}
+.sp-meta-label{color:#9ca3af;font-size:.78rem;}
+.sp-budget{color:#7c3aed;font-weight:700;}
+.sp-badge{font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:20px;}
+.sp-badge-paid{background:#dcfce7;color:#15803d;}
+.sp-badge-barter{background:#ede9fe;color:#6d28d9;}
+.sp-tip-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem;}
+.sp-tip-list li{display:flex;align-items:flex-start;gap:.5rem;font-size:.83rem;color:#374151;}
+.sp-tip-list li i{color:#a855f7;margin-top:.15rem;flex-shrink:0;}
+.sp-main{min-width:0;}
+.sp-card{background:#fff;border-radius:20px;border:1.5px solid #f0e7ff;box-shadow:0 4px 20px rgba(168,85,247,.08);overflow:hidden;}
+.sp-card-header{background:linear-gradient(135deg,#faf5ff,#f3e8ff);padding:1.25rem 2rem;border-bottom:1px solid #f0e7ff;}
+.sp-card-header h2{margin:0;font-size:1.1rem;color:#1f0045;display:flex;align-items:center;gap:.5rem;}
+.sp-card-header h2 i{color:#a855f7;}
+.req{color:#ef4444;}
+.sp-form{padding:1.75rem 2rem;display:flex;flex-direction:column;gap:1.4rem;}
+.sp-field{display:flex;flex-direction:column;gap:.4rem;}
+.sp-field label{font-weight:700;font-size:.88rem;color:#111827;}
+.sp-input{border:1.5px solid #e9d5ff;border-radius:10px;padding:.7rem 1rem;font-size:.9rem;color:#374151;font-family:inherit;outline:none;background:#faf5ff;transition:.2s;resize:vertical;}
+.sp-input:focus{border-color:#a855f7;background:#fff;box-shadow:0 0 0 3px rgba(168,85,247,.1);}
+.sp-textarea{min-height:160px;}
+.sp-dropzone{border:2px dashed #d8b4fe;border-radius:14px;padding:1.75rem;text-align:center;cursor:pointer;background:#faf5ff;transition:all .2s;}
+.sp-dropzone:hover,.sp-dropzone.dragover{border-color:#a855f7;background:#f3e8ff;}
+.sp-dz-icon{font-size:1.75rem;color:#c084fc;margin-bottom:.4rem;display:block;}
+.sp-dz-text{font-weight:600;color:#374151;font-size:.88rem;margin:.2rem 0;}
+.sp-dz-hint{font-size:.75rem;color:#9ca3af;margin:0;}
+.sp-alert-box{background:#fef9c3;border:1px solid #fbbf24;border-radius:10px;padding:.7rem 1rem;font-size:.84rem;color:#92400e;display:flex;align-items:center;gap:.5rem;}
+.sp-alert-box a{color:#7c3aed;font-weight:700;}
+.sp-actions{display:flex;align-items:center;justify-content:flex-end;gap:1rem;padding-top:1rem;border-top:1px solid #f3f4f6;}
+.sp-cancel-btn{color:#6b7280;text-decoration:none;font-size:.88rem;padding:.6rem 1.2rem;border-radius:9px;border:1.5px solid #e5e7eb;font-weight:600;transition:.2s;}
+.sp-cancel-btn:hover{background:#f9fafb;}
+.sp-submit-btn{display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;padding:.7rem 2rem;border-radius:12px;font-size:.92rem;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;box-shadow:0 4px 14px rgba(168,85,247,.35);}
+.sp-submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(168,85,247,.45);}
+@media(max-width:900px){.sp-layout{grid-template-columns:1fr;}.sp-sidebar{flex-direction:row;flex-wrap:wrap;}.sp-widget{flex:1;min-width:240px;}}
+</style>
+<script>
+const ta=document.getElementById('cover_letter'),cc=document.getElementById('char-count');
+if(ta&&cc)ta.addEventListener('input',()=>cc.textContent=ta.value.length);
+const fi=document.getElementById('cv_file'),dz=document.getElementById('dropzone'),fp=document.getElementById('file-preview');
+if(fi){fi.addEventListener('change',()=>{if(fi.files.length){fp.style.display='flex';fp.innerHTML=`<i class="fas fa-file-pdf"></i> ${fi.files[0].name} (${(fi.files[0].size/1024).toFixed(1)} KB)`;}});}
+if(dz){dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files.length){fi.files=e.dataTransfer.files;fp.style.display='flex';fp.innerHTML=`<i class="fas fa-file-pdf"></i> ${e.dataTransfer.files[0].name}`;}});}
+</script>
 {% endblock %}

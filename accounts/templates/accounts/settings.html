@@ -1,132 +1,278 @@
 {% extends 'accounts/base.html' %}
 {% load static %}
-
-{% block title %}Settings - SkillCurrency{% endblock %}
-
+{% block title %}Settings – SkillCurrency{% endblock %}
 {% block content %}
-<div class="settings-layout">
-    <div class="settings-sidebar">
-        <ul class="settings-nav">
-            <li class="active"><a href="#public" onclick="switchTab('public', this); return false;"><i class="fas fa-user"></i> Public Profile</a></li>
-            <li><a href="#account" onclick="switchTab('account', this); return false;"><i class="fas fa-cog"></i> Account Settings</a></li>
-            <li><a href="{% url 'identity_vault' %}"><i class="fas fa-id-card"></i> Identity Vault</a></li>
-        </ul>
+<style>
+.stg-wrap{min-height:100vh;background:#f8f3ff;}
+.stg-hero{background:linear-gradient(135deg,#1a0038,#3b0764 50%,#7c3aed);padding:2rem 5%;position:relative;overflow:hidden;}
+.stg-hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(168,85,247,.25),transparent 65%);pointer-events:none;}
+.stg-hero-inner{max-width:1100px;z-index:1;position:relative;display:flex;align-items:center;gap:1.5rem;}
+.stg-hero-av{width:72px;height:72px;border-radius:50%;border:3px solid rgba(168,85,247,.6);object-fit:cover;flex-shrink:0;}
+.stg-hero-ph{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:1.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:3px solid rgba(168,85,247,.5);}
+.stg-hero-info h1{font-size:1.4rem;font-weight:800;color:#fff;margin:0 0 .2rem;}
+.stg-hero-info p{color:#c4b5fd;font-size:.88rem;margin:0 0 .5rem;}
+.stg-hbadges{display:flex;flex-wrap:wrap;gap:.3rem;}
+.stg-hb{font-size:.7rem;font-weight:700;padding:.2rem .6rem;border-radius:20px;background:rgba(168,85,247,.3);border:1px solid rgba(168,85,247,.5);color:#e9d5ff;display:inline-flex;align-items:center;gap:.3rem;}
+.stg-hb.verified{background:rgba(22,163,74,.25);border-color:rgba(22,163,74,.5);color:#86efac;}
+.stg-hb.role{background:rgba(236,72,153,.2);border-color:rgba(236,72,153,.4);color:#f9a8d4;}
+/* Layout */
+.stg-layout{display:grid;grid-template-columns:220px 1fr;gap:1.5rem;max-width:1100px;margin:0 auto;padding:2rem 5%;}
+/* Sidebar */
+.stg-sb{display:flex;flex-direction:column;gap:.4rem;}
+.stg-sb a{display:flex;align-items:center;gap:.6rem;padding:.65rem 1rem;border-radius:10px;text-decoration:none;font-size:.88rem;font-weight:600;color:#6b7280;transition:.15s;border:1px solid transparent;}
+.stg-sb a:hover{background:#f3e8ff;color:#7c3aed;}
+.stg-sb a.active{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;box-shadow:0 4px 12px rgba(168,85,247,.3);}
+.stg-sb a i{width:16px;text-align:center;}
+.stg-sb .ext-link{margin-top:.5rem;border:1px solid #e9d5ff!important;}
+/* Cards */
+.stg-card{background:#fff;border-radius:20px;border:1.5px solid #f0e7ff;box-shadow:0 4px 20px rgba(168,85,247,.08);overflow:hidden;margin-bottom:1.5rem;}
+.stg-ch{background:linear-gradient(135deg,#faf5ff,#f3e8ff);padding:1rem 1.5rem;border-bottom:1px solid #f0e7ff;display:flex;align-items:center;justify-content:space-between;}
+.stg-ct{font-size:1rem;font-weight:700;color:#1f0045;display:flex;align-items:center;gap:.5rem;}
+.stg-ct i{color:#a855f7;}
+.stg-cb{padding:1.5rem;}
+/* Public profile preview */
+.stg-grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.stg-ir{display:flex;flex-direction:column;gap:.2rem;}
+.stg-il{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#a855f7;}
+.stg-iv{font-size:.9rem;color:#1f0045;font-weight:600;}
+.stg-iv.empty{color:#9ca3af;font-weight:400;font-style:italic;}
+.stg-bio-box{grid-column:1/-1;background:#faf5ff;border-radius:10px;padding:.75rem 1rem;font-size:.86rem;color:#374151;line-height:1.6;}
+.stg-skill-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:.4rem;}
+.stg-skill-chip{background:#f3e8ff;color:#7c3aed;font-size:.72rem;font-weight:600;padding:.2rem .55rem;border-radius:20px;display:flex;align-items:center;gap:.25rem;}
+.view-btn{display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;font-weight:700;padding:.45rem 1rem;border-radius:9px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;text-decoration:none;transition:.2s;}
+.view-btn:hover{box-shadow:0 4px 14px rgba(168,85,247,.35);}
+/* Form */
+.stg-fg{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.stg-f{display:flex;flex-direction:column;gap:.4rem;}
+.stg-f.full{grid-column:1/-1;}
+.stg-f label{font-size:.83rem;font-weight:700;color:#374151;}
+.stg-input{border:1.5px solid #e9d5ff;border-radius:10px;padding:.65rem .9rem;font-size:.88rem;color:#374151;font-family:inherit;outline:none;background:#faf5ff;transition:.2s;width:100%;box-sizing:border-box;}
+.stg-input:focus{border-color:#a855f7;background:#fff;box-shadow:0 0 0 3px rgba(168,85,247,.1);}
+.stg-ta{min-height:100px;resize:vertical;}
+.stg-av-row{display:flex;align-items:center;gap:1.25rem;margin-bottom:1.25rem;}
+.stg-av-img{width:64px;height:64px;border-radius:50%;border:2.5px solid #e9d5ff;object-fit:cover;flex-shrink:0;}
+.stg-av-ph{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-size:1.4rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.stg-av-label{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:9px;background:#f3e8ff;color:#7c3aed;font-size:.83rem;font-weight:700;cursor:pointer;border:1.5px solid #e9d5ff;transition:.2s;}
+.stg-av-label:hover{background:#ede9fe;}
+.stg-save-btn{display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;padding:.65rem 1.75rem;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;box-shadow:0 4px 14px rgba(168,85,247,.3);}
+.stg-save-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(168,85,247,.4);}
+/* Vault */
+.stg-vs{display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-radius:12px;margin-bottom:1.25rem;}
+.stg-vs.unverified{background:#fef9c3;border:1px solid #fbbf24;color:#92400e;}
+.stg-vs.pending{background:#e0e7ff;border:1px solid #818cf8;color:#3730a3;}
+.stg-vs.approved{background:#dcfce7;border:1px solid #4ade80;color:#15803d;}
+.stg-vs.rejected{background:#fee2e2;border:1px solid #f87171;color:#991b1b;}
+.stg-vi{font-size:1.5rem;}
+.stg-dz{border:2px dashed #d8b4fe;border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;background:#faf5ff;transition:.2s;}
+.stg-dz:hover{border-color:#a855f7;background:#f3e8ff;}
+.stg-dz i{font-size:1.75rem;color:#c084fc;margin-bottom:.4rem;display:block;}
+.stg-dz p{font-weight:600;color:#374151;font-size:.88rem;margin:.2rem 0;}
+.stg-dz small{font-size:.75rem;color:#9ca3af;}
+.alert{padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.88rem;}
+.alert-success{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;}
+.alert-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;}
+.stg-anc{padding-top:.5rem;}
+@media(max-width:900px){.stg-layout{grid-template-columns:1fr;}.stg-grid2,.stg-fg{grid-template-columns:1fr;}}
+</style>
+
+<!-- HERO -->
+<div class="stg-wrap">
+<div class="stg-hero">
+  <div class="stg-hero-inner">
+    {% if user.avatar %}<img src="{{ user.avatar.url }}" class="stg-hero-av" alt="avatar">
+    {% else %}<div class="stg-hero-ph">{{ user.username|make_list|first|upper }}</div>{% endif %}
+    <div class="stg-hero-info">
+      <h1>{{ user.get_full_name|default:user.username }}</h1>
+      <p>@{{ user.username }} · Member since {{ user.date_joined|date:"M Y" }}</p>
+      <div class="stg-hbadges">
+        <span class="stg-hb role"><i class="fas fa-user-tag"></i> {{ user.role }}</span>
+        {% if user.is_identity_verified %}<span class="stg-hb verified"><i class="fas fa-shield-alt"></i> Verified</span>
+        {% else %}<span class="stg-hb"><i class="fas fa-exclamation-circle"></i> {{ user.verification_status }}</span>{% endif %}
+        {% for b in user.skill_badges.all|slice:":4" %}<span class="stg-hb"><i class="fas fa-award"></i> {{ b.category.name }}</span>{% endfor %}
+      </div>
     </div>
-    
-    <div class="settings-main">
-        <div class="settings-header">
-            <h2>Profile Settings</h2>
-            <p>Update your public profile information, avatar, and bio.</p>
-        </div>
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-        
-        <!-- Tab A: Public Profile -->
-        <div id="section-public" class="settings-section" style="display: block;">
-            <form method="POST" action="{% url 'settings_page' %}" enctype="multipart/form-data" class="settings-form">
-                {% csrf_token %}
-                <input type="hidden" name="section" value="public">
-                
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>Unique User ID</label>
-                    <div style="background: #f3f4f6; padding: 0.75rem 1rem; border-radius: 8px; font-family: monospace; color: #a855f7; font-weight: bold;">
-                        {{ user.user_uid|default:"Will be generated on next save" }}
-                    </div>
-                </div>
-
-                <div class="avatar-upload-section">
-                    <div class="current-avatar">
-                        {% if user.avatar %}
-                            <img src="{{ user.avatar.url }}" alt="Avatar" class="avatar-preview">
-                        {% else %}
-                            <div class="avatar-placeholder">{{ user.username|make_list|first|upper }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="upload-controls">
-                        <label class="btn btn-secondary">
-                            <i class="fas fa-camera"></i> Change Avatar
-                            <input type="file" name="avatar" accept="image/*" style="display: none;">
-                        </label>
-                        <p class="text-xs text-gray mt-1">Recommended size: 256x256px. JPG, PNG or GIF.</p>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group flex-1">
-                        <label>First Name</label>
-                        <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control">
-                    </div>
-                    <div class="form-group flex-1">
-                        <label>Last Name</label>
-                        <input type="text" name="last_name" value="{{ user.last_name }}" class="form-control">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Bio / Tagline</label>
-                    <textarea name="bio" rows="4" class="form-control" placeholder="Tell clients about yourself...">{{ user.bio }}</textarea>
-                </div>
-                
-                <div class="form-actions mt-4">
-                    <button type="submit" class="btn btn-purple"><i class="fas fa-save"></i> Save Public Profile</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Tab B: Account Settings -->
-        <div id="section-account" class="settings-section" style="display: none;">
-            <form method="POST" action="{% url 'settings_page' %}" class="settings-form">
-                {% csrf_token %}
-                <input type="hidden" name="section" value="account">
-                
-                <div class="form-group">
-                    <label>Username (Cannot be changed)</label>
-                    <input type="text" value="{{ user.username }}" class="form-control" disabled style="background: #f3f4f6;">
-                </div>
-
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" name="email" value="{{ user.email }}" class="form-control" placeholder="your@email.com">
-                </div>
-                
-                <div class="form-group">
-                    <label>Current Role</label>
-                    <div style="background: #f3f4f6; padding: 0.75rem 1rem; border-radius: 8px; color: #4b5563; font-weight: 500;">
-                        {{ user.role }}
-                        {% if user.role == 'Unskilled' %}
-                            <span style="font-size: 0.8rem; color: #9ca3af; margin-left: 0.5rem;">(Take assessments in the Skill Lab to upgrade)</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <hr class="my-4">
-                
-                <div class="form-group">
-                    <label>NID / TIN Number</label>
-                    <input type="text" name="nid" value="{{ user.nid_tin_number|default:'' }}" class="form-control" placeholder="Required for verification">
-                </div>
-                
-                <div class="form-actions mt-4">
-                    <button type="submit" class="btn btn-purple"><i class="fas fa-lock"></i> Save Account Settings</button>
-                </div>
-            </form>
-        </div>
-    </div>
+  </div>
 </div>
 
+<div class="stg-layout">
+  <!-- SIDEBAR -->
+  <aside class="stg-sb">
+    <a href="#public-profile" class="active" data-sec="public-profile"><i class="fas fa-id-badge"></i> Public Profile</a>
+    <a href="#edit-profile" data-sec="edit-profile"><i class="fas fa-user-edit"></i> Edit Profile</a>
+    <a href="#identity-vault" data-sec="identity-vault"><i class="fas fa-shield-alt"></i> Identity Vault</a>
+    <a href="{% url 'public_profile' user.username %}" target="_blank" class="ext-link"><i class="fas fa-external-link-alt"></i> View Live Profile</a>
+  </aside>
+
+  <!-- CONTENT -->
+  <div>
+    {% if messages %}{% for m in messages %}
+      <div class="alert {% if m.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">{{ m }}</div>
+    {% endfor %}{% endif %}
+
+    <!-- ═══ SECTION 1: PUBLIC PROFILE PREVIEW ═══ -->
+    <div id="public-profile" class="stg-anc">
+      <div class="stg-card">
+        <div class="stg-ch">
+          <div class="stg-ct"><i class="fas fa-id-badge"></i> Public Profile Preview</div>
+          <a href="{% url 'public_profile' user.username %}" class="view-btn" target="_blank"><i class="fas fa-eye"></i> View Live</a>
+        </div>
+        <div class="stg-cb">
+          <div class="stg-grid2">
+            <div class="stg-ir"><span class="stg-il">Full Name</span>
+              <span class="stg-iv {% if not user.get_full_name %}empty{% endif %}">{{ user.get_full_name|default:"Not set" }}</span></div>
+            <div class="stg-ir"><span class="stg-il">Username</span><span class="stg-iv">@{{ user.username }}</span></div>
+            <div class="stg-ir"><span class="stg-il">Role</span><span class="stg-iv">{{ user.role }}</span></div>
+            <div class="stg-ir"><span class="stg-il">Email</span><span class="stg-iv">{{ user.email }}</span></div>
+            <div class="stg-ir"><span class="stg-il">Wallet Balance</span><span class="stg-iv" style="color:#7c3aed;">${{ user.wallet_balance }}</span></div>
+            <div class="stg-ir"><span class="stg-il">Identity</span>
+              <span class="stg-iv">{% if user.is_identity_verified %}<span style="color:#15803d;"><i class="fas fa-check-circle"></i> Verified</span>{% else %}<span style="color:#d97706;"><i class="fas fa-clock"></i> {{ user.verification_status }}</span>{% endif %}</span>
+            </div>
+            {% if user.bio %}<div class="stg-bio-box"><strong style="font-size:.72rem;color:#a855f7;text-transform:uppercase;letter-spacing:.06em;">Bio</strong><br>{{ user.bio }}</div>{% endif %}
+            {% with badges=user.skill_badges.all %}{% if badges %}
+            <div class="stg-skill-row">{% for b in badges %}<span class="stg-skill-chip"><i class="fas fa-award"></i> {{ b.category.name }} L{{ b.level }}</span>{% endfor %}</div>
+            {% endif %}{% endwith %}
+            {% if user.user_uid %}<div class="stg-ir" style="grid-column:1/-1;"><span class="stg-il">User ID</span><span class="stg-iv" style="font-family:monospace;color:#7c3aed;">{{ user.user_uid }}</span></div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 2: EDIT PROFILE ═══ -->
+    <div id="edit-profile" class="stg-anc">
+      <div class="stg-card">
+        <div class="stg-ch"><div class="stg-ct"><i class="fas fa-user-edit"></i> Edit Profile</div></div>
+        <div class="stg-cb">
+          <form method="POST" action="{% url 'settings_page' %}" enctype="multipart/form-data">
+            {% csrf_token %}<input type="hidden" name="section" value="public">
+            <div class="stg-av-row">
+              {% if user.avatar %}<img src="{{ user.avatar.url }}" class="stg-av-img" id="av-preview">
+              {% else %}<div class="stg-av-ph" id="av-ph">{{ user.username|make_list|first|upper }}</div>{% endif %}
+              <div>
+                <label class="stg-av-label"><i class="fas fa-camera"></i> Change Photo
+                  <input type="file" name="avatar" accept="image/*" style="display:none;" onchange="previewAv(this)"></label>
+                <div style="font-size:.73rem;color:#9ca3af;margin-top:.35rem;">JPG, PNG or GIF · max 5 MB</div>
+              </div>
+            </div>
+            <div class="stg-fg">
+              <div class="stg-f"><label>First Name</label><input type="text" name="first_name" value="{{ user.first_name }}" class="stg-input" placeholder="First name"></div>
+              <div class="stg-f"><label>Last Name</label><input type="text" name="last_name" value="{{ user.last_name }}" class="stg-input" placeholder="Last name"></div>
+              <div class="stg-f full"><label>Bio <span style="color:#9ca3af;font-weight:400;">(shown on your public profile)</span></label>
+                <textarea name="bio" class="stg-input stg-ta" placeholder="Tell clients what you do…">{{ user.bio }}</textarea></div>
+            </div>
+            <div style="margin-top:1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
+              <button type="submit" class="stg-save-btn"><i class="fas fa-save"></i> Save Profile</button>
+            </div>
+          </form>
+          <hr style="border:none;border-top:1px solid #f0e7ff;margin:1.5rem 0;">
+          <form method="POST" action="{% url 'settings_page' %}">
+            {% csrf_token %}<input type="hidden" name="section" value="account">
+            <div class="stg-fg">
+              <div class="stg-f"><label>Email Address</label><input type="email" name="email" value="{{ user.email }}" class="stg-input"></div>
+              <div class="stg-f"><label>NID / TIN Number</label><input type="text" name="nid" value="{{ user.nid_tin_number|default:'' }}" class="stg-input" placeholder="Required for verification"></div>
+            </div>
+            <div style="margin-top:1rem;">
+              <button type="submit" class="stg-save-btn"><i class="fas fa-lock"></i> Save Account Settings</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 3: IDENTITY VAULT ═══ -->
+    <div id="identity-vault" class="stg-anc">
+      <div class="stg-card">
+        <div class="stg-ch"><div class="stg-ct"><i class="fas fa-shield-alt"></i> Identity Vault</div></div>
+        <div class="stg-cb">
+          <div class="stg-vs {{ user.verification_status|lower }}">
+            <span class="stg-vi">
+              {% if user.verification_status == 'Approved' %}<i class="fas fa-check-circle"></i>
+              {% elif user.verification_status == 'Pending' %}<i class="fas fa-hourglass-half"></i>
+              {% elif user.verification_status == 'Rejected' %}<i class="fas fa-times-circle"></i>
+              {% else %}<i class="fas fa-exclamation-circle"></i>{% endif %}
+            </span>
+            <div>
+              <strong>Status: {{ user.verification_status }}</strong>
+              <div style="font-size:.8rem;margin-top:.15rem;">
+                {% if user.verification_status == 'Approved' %}Your identity is verified. You can now submit proposals.
+                {% elif user.verification_status == 'Pending' %}Your document is under review (1–2 business days).
+                {% elif user.verification_status == 'Rejected' %}Verification failed. Please upload a clearer government-issued ID.
+                {% else %}Upload a government-issued ID to get verified and unlock full access.{% endif %}
+              </div>
+            </div>
+          </div>
+          {% if user.id_document %}
+          <div style="margin-bottom:1rem;padding:.75rem 1rem;background:#faf5ff;border-radius:10px;font-size:.85rem;display:flex;align-items:center;gap:.5rem;">
+            <i class="fas fa-file-alt" style="color:#a855f7;"></i>
+            <strong>Current document:</strong>
+            <a href="{{ user.id_document.url }}" target="_blank" style="color:#7c3aed;">View uploaded file</a>
+          </div>{% endif %}
+          {% if user.verification_status == 'Unverified' or user.verification_status == 'Rejected' %}
+          <form method="POST" action="{% url 'identity_vault' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="stg-dz" onclick="document.getElementById('vaultfile').click()">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to upload your ID document</p>
+              <small>PDF, JPG or PNG · max 5 MB</small>
+              <div id="vaultprev" style="display:none;margin-top:.75rem;background:#ede9fe;border-radius:8px;padding:.45rem .75rem;font-size:.82rem;font-weight:600;color:#7c3aed;"></div>
+              <input type="file" id="vaultfile" name="id_document" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" required onchange="previewVault(this)">
+            </div>
+            <div style="margin-top:1rem;">
+              <button type="submit" class="stg-save-btn"><i class="fas fa-upload"></i> Submit for Verification</button>
+            </div>
+          </form>
+          {% else %}
+          <div style="text-align:center;padding:1.5rem;background:#faf5ff;border-radius:12px;border:1.5px dashed #e9d5ff;">
+            <i class="fas fa-lock" style="font-size:2rem;color:#c084fc;display:block;margin-bottom:.5rem;"></i>
+            <strong style="color:#1f0045;">Vault Locked</strong>
+            <p style="color:#6b7280;font-size:.85rem;margin:.4rem 0 0;">
+              {% if user.verification_status == 'Approved' %}You're verified! No action needed.{% else %}Document under review.{% endif %}
+            </p>
+          </div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+</div><!-- /wrap -->
+
 <script>
-function switchTab(tabId, el) {
-    document.querySelectorAll('.settings-section').forEach(sec => sec.style.display = 'none');
-    document.getElementById('section-' + tabId).style.display = 'block';
-    
-    document.querySelectorAll('.settings-nav li').forEach(li => li.classList.remove('active'));
-    el.parentElement.classList.add('active');
+// Sidebar smooth scroll + active
+document.querySelectorAll('.stg-sb a[data-sec]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.getElementById(a.dataset.sec)?.scrollIntoView({behavior:'smooth',block:'start'});
+    document.querySelectorAll('.stg-sb a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+  });
+});
+// Auto-highlight sidebar on scroll
+const secs=['public-profile','edit-profile','identity-vault'];
+window.addEventListener('scroll',()=>{
+  secs.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const r=el.getBoundingClientRect();
+    if(r.top<=120&&r.bottom>120){
+      document.querySelectorAll('.stg-sb a[data-sec]').forEach(a=>a.classList.toggle('active',a.dataset.sec===id));
+    }
+  });
+});
+// Avatar preview
+function previewAv(input){
+  if(!input.files.length)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const img=document.getElementById('av-preview');
+    const ph=document.getElementById('av-ph');
+    if(img){img.src=e.target.result;}
+    else if(ph){ph.style.backgroundImage=`url(${e.target.result})`;ph.textContent='';}
+  };r.readAsDataURL(input.files[0]);
+}
+// Vault preview
+function previewVault(input){
+  const p=document.getElementById('vaultprev');
+  if(p&&input.files.length){p.style.display='block';p.innerHTML=`<i class="fas fa-file-alt"></i> ${input.files[0].name} (${(input.files[0].size/1024).toFixed(1)} KB)`;}
 }
 </script>
 {% endblock %}
