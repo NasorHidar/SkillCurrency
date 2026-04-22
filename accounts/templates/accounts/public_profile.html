@@ -160,12 +160,15 @@
 
                     <h3>{{ profile_user.get_full_name|default:profile_user.username }}</h3>
                     <p class="pm-title">{{ professional_title }}</p>
+                    {% if profile_user.user_uid %}
+                        <p style="font-size: 0.8rem; color: #a855f7; font-weight: bold; margin-bottom: 0.5rem;"><i class="fas fa-fingerprint"></i> {{ profile_user.user_uid }}</p>
+                    {% endif %}
 
                     {% if badges %}
                     <div class="pm-badges-row">
                         {% for badge in badges %}
-                            <span class="pm-badge-chip" title="{{ badge.category.name }} – Level {{ badge.level }}">
-                                <i class="fas fa-award"></i> {{ badge.category.name|truncatechars:12 }}
+                            <span class="pm-badge-chip" title="{{ badge.badge_label }} – Level {{ badge.level }}">
+                                <i class="fas fa-award"></i> {{ badge.badge_label|truncatechars:18 }}
                             </span>
                         {% endfor %}
                     </div>
@@ -213,7 +216,7 @@
                     <a href="{% url 'marketplace_feed' %}" class="pm-quick-btn">
                         <i class="fas fa-search"></i> Browse Jobs
                     </a>
-                    {% if profile_user.role != 'Skilled' %}
+                    {% if request.user.is_staff or request.user.role == 'Buyer' %}
                     <a href="{% url 'create_job' %}" class="pm-quick-btn">
                         <i class="fas fa-plus"></i> Post a Job
                     </a>

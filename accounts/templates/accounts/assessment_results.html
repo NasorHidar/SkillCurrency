@@ -29,7 +29,14 @@
         <div class="results-status">
             {% if result.passed %}
                 <h3 class="success-text">Excellent Work!</h3>
-                <p>You have demonstrated mastery in this subject.</p>
+                <p>You scored {{ result.score }}% and demonstrated mastery in this subject.</p>
+                <div style="margin: 1.5rem 0; padding: 1rem; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 12px;">
+                    <p style="margin: 0; color: #6b7280; font-size: 0.85rem;">You earned a new badge!</p>
+                    <p style="margin: 0.5rem 0 0; font-size: 1.1rem; color: #a855f7; font-weight: bold;">
+                        <i class="fas fa-medal" style="margin-right: 0.5rem; font-size: 1.5rem; vertical-align: middle;"></i>
+                        {{ result.badge_label }}
+                    </p>
+                </div>
                 
                 <form method="POST" action="{% url 'mint_skillcurrency' %}" class="mt-4">
                     {% csrf_token %}
@@ -62,7 +69,7 @@
             <h4>Next Steps</h4>
             <ul>
                 {% if result.passed %}
-                    <li>Add "{{ result.category_name }} Expert" badge to your profile.</li>
+                    <li>Your "<strong>{{ result.badge_label }}</strong>" badge is now visible on your profile.</li>
                     <li>View 4 High-Value Gigs requiring this skill.</li>
                     <li><strong>Challenge:</strong> Take the next module.</li>
                 {% else %}

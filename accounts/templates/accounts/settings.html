@@ -7,8 +7,8 @@
 <div class="settings-layout">
     <div class="settings-sidebar">
         <ul class="settings-nav">
-            <li class="active"><a href="#profile"><i class="fas fa-user"></i> Public Profile</a></li>
-            <li><a href="#account"><i class="fas fa-cog"></i> Account Settings</a></li>
+            <li class="active"><a href="#public" onclick="switchTab('public', this); return false;"><i class="fas fa-user"></i> Public Profile</a></li>
+            <li><a href="#account" onclick="switchTab('account', this); return false;"><i class="fas fa-cog"></i> Account Settings</a></li>
             <li><a href="{% url 'identity_vault' %}"><i class="fas fa-id-card"></i> Identity Vault</a></li>
         </ul>
     </div>
@@ -27,53 +27,106 @@
             {% endfor %}
         {% endif %}
         
-        <form method="POST" action="{% url 'settings_page' %}" enctype="multipart/form-data" class="settings-form">
-            {% csrf_token %}
-            
-            <div class="avatar-upload-section">
-                <div class="current-avatar">
-                    {% if user.avatar %}
-                        <img src="{{ user.avatar.url }}" alt="Avatar" class="avatar-preview">
-                    {% else %}
-                        <div class="avatar-placeholder">{{ user.username|make_list|first|upper }}</div>
-                    {% endif %}
+        <!-- Tab A: Public Profile -->
+        <div id="section-public" class="settings-section" style="display: block;">
+            <form method="POST" action="{% url 'settings_page' %}" enctype="multipart/form-data" class="settings-form">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="public">
+                
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label>Unique User ID</label>
+                    <div style="background: #f3f4f6; padding: 0.75rem 1rem; border-radius: 8px; font-family: monospace; color: #a855f7; font-weight: bold;">
+                        {{ user.user_uid|default:"Will be generated on next save" }}
+                    </div>
                 </div>
-                <div class="upload-controls">
-                    <label class="btn btn-secondary">
-                        <i class="fas fa-camera"></i> Change Avatar
-                        <input type="file" name="avatar" accept="image/*" style="display: none;">
-                    </label>
-                    <p class="text-xs text-gray mt-1">Recommended size: 256x256px. JPG, PNG or GIF.</p>
+
+                <div class="avatar-upload-section">
+                    <div class="current-avatar">
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="Avatar" class="avatar-preview">
+                        {% else %}
+                            <div class="avatar-placeholder">{{ user.username|make_list|first|upper }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="upload-controls">
+                        <label class="btn btn-secondary">
+                            <i class="fas fa-camera"></i> Change Avatar
+                            <input type="file" name="avatar" accept="image/*" style="display: none;">
+                        </label>
+                        <p class="text-xs text-gray mt-1">Recommended size: 256x256px. JPG, PNG or GIF.</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group flex-1">
-                    <label>First Name</label>
-                    <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control">
+                
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" value="{{ user.last_name }}" class="form-control">
+                    </div>
                 </div>
-                <div class="form-group flex-1">
-                    <label>Last Name</label>
-                    <input type="text" name="last_name" value="{{ user.last_name }}" class="form-control">
+                
+                <div class="form-group">
+                    <label>Bio / Tagline</label>
+                    <textarea name="bio" rows="4" class="form-control" placeholder="Tell clients about yourself...">{{ user.bio }}</textarea>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Bio</label>
-                <textarea name="bio" rows="4" class="form-control" placeholder="Tell clients about yourself...">{{ user.bio }}</textarea>
-            </div>
-            
-            <hr class="my-4">
-            
-            <div class="form-group">
-                <label>NID / TIN Number</label>
-                <input type="text" name="nid" value="{{ user.nid_tin_number }}" class="form-control" placeholder="Required for verification">
-            </div>
-            
-            <div class="form-actions mt-4">
-                <button type="submit" class="btn btn-purple"><i class="fas fa-save"></i> Save Changes</button>
-            </div>
-        </form>
+                
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-purple"><i class="fas fa-save"></i> Save Public Profile</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tab B: Account Settings -->
+        <div id="section-account" class="settings-section" style="display: none;">
+            <form method="POST" action="{% url 'settings_page' %}" class="settings-form">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="account">
+                
+                <div class="form-group">
+                    <label>Username (Cannot be changed)</label>
+                    <input type="text" value="{{ user.username }}" class="form-control" disabled style="background: #f3f4f6;">
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" value="{{ user.email }}" class="form-control" placeholder="your@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Current Role</label>
+                    <div style="background: #f3f4f6; padding: 0.75rem 1rem; border-radius: 8px; color: #4b5563; font-weight: 500;">
+                        {{ user.role }}
+                        {% if user.role == 'Unskilled' %}
+                            <span style="font-size: 0.8rem; color: #9ca3af; margin-left: 0.5rem;">(Take assessments in the Skill Lab to upgrade)</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+                
+                <div class="form-group">
+                    <label>NID / TIN Number</label>
+                    <input type="text" name="nid" value="{{ user.nid_tin_number|default:'' }}" class="form-control" placeholder="Required for verification">
+                </div>
+                
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-purple"><i class="fas fa-lock"></i> Save Account Settings</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+function switchTab(tabId, el) {
+    document.querySelectorAll('.settings-section').forEach(sec => sec.style.display = 'none');
+    document.getElementById('section-' + tabId).style.display = 'block';
+    
+    document.querySelectorAll('.settings-nav li').forEach(li => li.classList.remove('active'));
+    el.parentElement.classList.add('active');
+}
+</script>
 {% endblock %}

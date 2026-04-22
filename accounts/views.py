@@ -6,6 +6,19 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Q
 from .forms import CustomUserCreationForm
 from .models import CustomUser, SkillCategory, SkillBadge, AssessmentQuestion, JobPost, JobProposal, ServiceAgreement, Milestone, EncryptedMessage, Transaction, Notification
+import uuid as _uuid
+from django.utils import timezone as _tz
+
+
+def generate_user_uid():
+    """Generate a unique structured User ID: SC-YYYYMM-XXXXX"""
+    prefix = 'SC'
+    date_part = _tz.now().strftime('%Y%m')
+    while True:
+        random_part = _uuid.uuid4().hex[:5].upper()
+        uid = f"{prefix}-{date_part}-{random_part}"
+        if not CustomUser.objects.filter(user_uid=uid).exists():
+            return uid
 
 def landing_page(request):
     return render(request, 'accounts/landing.html')
@@ -14,7 +27,9 @@ def sign_up(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            user.user_uid = generate_user_uid()
+            user.save()
             login(request, user)
             return redirect('landing_page')
     else:
@@ -236,6 +251,7 @@ def grade_assessment(request, category_id):
         score_percentage = int(score_percentage)
         
         passed = score_percentage >= 80
+        badge_label = f"Skilled at {category.name}"
         
         if passed:
             badge, created = SkillBadge.objects.get_or_create(
@@ -252,12 +268,10 @@ def grade_assessment(request, category_id):
                 request.user.role = 'Skilled'
                 request.user.save()
                 
-            # Award SkillCurrency (handled in the Mint button later, or automatically here)
-            # We'll just pass the flag to the template for now
-            
         # Store results in session for the results page
         request.session['assessment_result'] = {
             'category_name': category.name,
+            'badge_label': badge_label,
             'score': score_percentage,
             'passed': passed,
             'category_id': category.id
@@ -356,8 +370,9 @@ def marketplace_feed(request):
 
 @login_required
 def create_job(request):
-    if request.user.role == 'Skilled':
-        messages.error(request, "Skilled users cannot post jobs. Please switch to a Buyer account.")
+    # Only Buyer role or Admin (is_staff) can create jobs
+    if not (request.user.is_staff or request.user.role == 'Buyer'):
+        messages.error(request, "Only Buyers and Admins can post jobs. Switch your role to Buyer in Settings to get started.")
         return redirect('marketplace_feed')
         
     if request.method == 'POST':
@@ -722,26 +737,40 @@ def create_notification(user, message, link=None):
 def settings_page(request):
     user = CustomUser.objects.get(id=request.user.id)
     if request.method == 'POST':
-        # Update Profile Info
-        first_name = request.POST.get('first_name', '')
-        last_name = request.POST.get('last_name', '')
-        bio = request.POST.get('bio', '')
-        avatar = request.FILES.get('avatar')
-        nid = request.POST.get('nid', '')
-        
-        user.first_name = first_name
-        user.last_name = last_name
-        user.bio = bio
-        if nid:
-            user.nid_tin_number = nid
-            
-        if avatar:
-            user.avatar = avatar
-            
-        user.save()
-        messages.success(request, "Your profile has been successfully updated!")
+        section = request.POST.get('section', 'public')
+
+        if section == 'public':
+            # Public profile section
+            first_name = request.POST.get('first_name', '')
+            last_name = request.POST.get('last_name', '')
+            bio = request.POST.get('bio', '')
+            avatar = request.FILES.get('avatar')
+
+            user.first_name = first_name
+            user.last_name = last_name
+            user.bio = bio
+
+            if avatar:
+                user.avatar = avatar
+
+            user.save()
+            messages.success(request, "Public profile updated successfully!")
+
+        elif section == 'account':
+            # Account settings section
+            email = request.POST.get('email', '')
+            nid = request.POST.get('nid', '')
+
+            if email:
+                user.email = email
+            if nid:
+                user.nid_tin_number = nid
+
+            user.save()
+            messages.success(request, "Account settings updated successfully!")
+
         return redirect('settings_page')
-        
+
     return render(request, 'accounts/settings.html', {'user': user})
 
 @login_required
@@ -755,3 +784,19 @@ def mark_notification_read(request, notif_id):
     except Notification.DoesNotExist:
         pass
     return redirect(request.META.get('HTTP_REFERER', 'landing_page'))
+
+
+def search_users(request):
+    """Search for users by full name or username."""
+    query = request.GET.get('q', '').strip()
+    results = []
+    if query:
+        results = CustomUser.objects.filter(
+            Q(username__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query)
+        ).exclude(is_superuser=True).order_by('username')[:30]
+    return render(request, 'accounts/user_search_results.html', {
+        'query': query,
+        'results': results,
+    })
