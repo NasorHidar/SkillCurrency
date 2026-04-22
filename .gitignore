@@ -23,6 +23,7 @@ media/
 # ── Environment / Secrets ────────────────────────────────────
 .env
 .env.*
+!.env.example
 *.secret
 
 # ── Static collected ─────────────────────────────────────────
