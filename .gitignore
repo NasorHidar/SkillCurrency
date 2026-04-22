@@ -1,0 +1,55 @@
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+
+# ── Virtual Environment ──────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ── Django ───────────────────────────────────────────────────
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# ── Environment / Secrets ────────────────────────────────────
+.env
+.env.*
+*.secret
+
+# ── Static collected ─────────────────────────────────────────
+staticfiles/
+static_root/
+
+# ── Distribution / Packaging ─────────────────────────────────
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# ── Testing ──────────────────────────────────────────────────
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
+# ── IDE / Editor ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
