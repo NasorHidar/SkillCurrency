@@ -52,41 +52,38 @@ class GeminiServiceTest(TestCase):
             tmp_file.write(b"fake image data")
             tmp_path = tmp_file.name
 
+        from unittest.mock import patch
+        
         # Mock the genai client and its methods
-        mock_genai = MagicMock()
-        
-        # Mock the file upload
-        mock_uploaded_file = MagicMock()
-        mock_uploaded_file.name = "files/fake_file_id"
-        
-        mock_genai.files.upload.return_value = mock_uploaded_file
-        
-        # Mock the generate_content response
-        mock_response = MagicMock()
-        mock_response.text = '{"is_valid": true, "reason": "Valid ID"}'
-        mock_genai.models.generate_content.return_value = mock_response
+        with patch('accounts.gemini_service.genai.Client') as MockClient:
+            mock_client_instance = MockClient.return_value
+            
+            # Mock the file upload
+            mock_uploaded_file = MagicMock()
+            mock_uploaded_file.name = "files/fake_file_id"
+            mock_client_instance.files.upload.return_value = mock_uploaded_file
+            
+            # Mock the generate_content response
+            mock_response = MagicMock()
+            mock_response.text = '{"status": "Approved", "reason": "Valid ID"}'
+            mock_client_instance.models.generate_content.return_value = mock_response
 
-        # Replace the actual genai with the mock for this test
-        original_genai = genai
-        globals()['genai'] = mock_genai
-
-        try:
-            result = analyze_id_document(tmp_path)
-            
-            # Check results
-            self.assertEqual(result[0], True)
-            self.assertEqual(result[1], 'Approved')
-            
-            # Check if methods were called correctly
-            mock_genai.files.upload.assert_called_once_with(file=tmp_path)
-            mock_genai.models.generate_content.assert_called_once()
-            mock_genai.files.delete.assert_called_once_with(name="files/fake_file_id")
-            
-        finally:
-            # Cleanup
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-            globals()['genai'] = original_genai
+            try:
+                result = analyze_id_document(tmp_path)
+                
+                # Check results
+                self.assertEqual(result[0], True)
+                self.assertEqual(result[1], 'Approved')
+                
+                # Check if methods were called correctly
+                mock_client_instance.files.upload.assert_called_once_with(file=tmp_path)
+                mock_client_instance.models.generate_content.assert_called_once()
+                mock_client_instance.files.delete.assert_called_once_with(name="files/fake_file_id")
+                
+            finally:
+                # Cleanup
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
 
     def test_api_failure(self):
         """
@@ -96,20 +93,20 @@ class GeminiServiceTest(TestCase):
             tmp_file.write(b"fake image data")
             tmp_path = tmp_file.name
 
-        mock_genai = MagicMock()
-        mock_genai.files.upload.side_effect = Exception("API Error")
-        
-        globals()['genai'] = mock_genai
+        from unittest.mock import patch
 
-        try:
-            result = analyze_id_document(tmp_path)
-            
-            self.assertEqual(result[0], False)
-            self.assertEqual(result[1], 'Pending')
-            self.assertIn("Manual review", result[2])
-            
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-            globals()['genai'] = genai
+        with patch('accounts.gemini_service.genai.Client') as MockClient:
+            mock_client_instance = MockClient.return_value
+            mock_client_instance.files.upload.side_effect = Exception("API Error")
+
+            try:
+                result = analyze_id_document(tmp_path)
+                
+                self.assertEqual(result[0], False)
+                self.assertEqual(result[1], 'Pending')
+                self.assertIn("Manual review", result[2])
+                
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
             

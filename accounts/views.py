@@ -304,6 +304,24 @@ def mint_skillcurrency(request):
             
     return redirect('skill_lab_dashboard')
 
+def _extract_first_dollar_amount(budget_str):
+    """
+    Parse the first numeric dollar value from a free-text budget string.
+    Handles formats like: "$80", "$1,500", "$400 – $600", "$1,000+".
+    Returns a float on success, or None if no dollar amount is found.
+    """
+    import re as _re
+    # Find the first occurrence of $ followed by optional whitespace and digits
+    # Allow commas as thousands separators (e.g. $1,500)
+    match = _re.search(r'\$\s*([\d,]+(?:\.\d+)?)', budget_str)
+    if match:
+        try:
+            return float(match.group(1).replace(',', ''))
+        except ValueError:
+            return None
+    return None
+
+
 def marketplace_feed(request):
     base_qs = JobPost.objects.filter(status='Open').select_related('author', 'category')
 
@@ -326,15 +344,29 @@ def marketplace_feed(request):
             Q(description__icontains=search_query) |
             Q(budget_or_terms__icontains=search_query)
         )
-    if budget_range == 'low':
-        # Paid jobs that look "cheap" (mention $ and numbers < 200)
-        jobs = jobs.filter(budget_or_terms__iregex=r'\$\s*\d{1,2}[^0-9]')
-    elif budget_range == 'mid':
-        jobs = jobs.filter(budget_or_terms__iregex=r'\$\s*[1-9]\d{2}')
-    elif budget_range == 'high':
-        jobs = jobs.filter(budget_or_terms__iregex=r'\$\s*[1-9]\d{3}')
-    elif budget_range == 'barter':
+
+    # ── Budget range filter (strict numeric boundaries) ───────────────────────
+    # budget_or_terms is a free-text CharField (e.g. "$80", "$400 – $600",
+    # "$1,500 USD").  Regex on the raw string is unreliable because a value like
+    # "$1,500" contains the sub-string "1," which fooled \d{1,2}[^0-9], and
+    # "$80 – $1500" contains "1500" which matched the high-range pattern even
+    # for mid-range jobs.  We therefore evaluate the queryset in Python and
+    # compare the *parsed* leading dollar amount against numeric thresholds.
+    if budget_range == 'barter':
         jobs = jobs.filter(interaction_type='Skill Barter')
+    elif budget_range in ('low', 'mid', 'high'):
+        filtered_ids = []
+        for job in jobs.filter(budget_or_terms__icontains='$'):
+            amount = _extract_first_dollar_amount(job.budget_or_terms)
+            if amount is None:
+                continue
+            if budget_range == 'low' and amount < 100:
+                filtered_ids.append(job.id)
+            elif budget_range == 'mid' and 100 <= amount <= 999:
+                filtered_ids.append(job.id)
+            elif budget_range == 'high' and amount >= 1000:
+                filtered_ids.append(job.id)
+        jobs = base_qs.filter(id__in=filtered_ids)
 
     # ── Preference-based personalisation ────────────────────────────────────
     recommended_jobs = None
