@@ -82,6 +82,11 @@ The platform supports both **Paid Services** and **Skill Barter** transactions, 
 - Live stats: wallet balance, active orders, badge count, ID verification status
 - Withdraw modal directly from profile page
 
+### 🔍 User Discovery & Navigation
+- **Global User Search**: Discover peers and potential collaborators across the platform
+- **Universal Back Navigation**: Consistent, intuitive browser-like navigation to move seamlessly between views
+- **Split Settings**: Dedicated interfaces for privacy management and profile customization
+
 ### 🛠️ Admin Panel
 - Auto-sync: ticking `is_identity_verified` → status → `Approved` + user notified
 - Full **Job Post management**: list, search, filter, edit, delete
@@ -302,6 +307,8 @@ User gets in-app notification ✅
 - [x] Financial Hub (wallet, top-up, withdraw, receipts)
 - [x] Full admin panel with auto-verify sync
 - [x] Premium UI (animated hero, glassmorphism, marquee)
+- [x] Global user search and profile discovery
+- [x] Universal back navigation across all platform views
 - [ ] Live payment gateway (SSLCommerz / bKash)
 - [ ] Email notifications (verification, proposals)
 - [ ] PostgreSQL production database
@@ -335,9 +342,11 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 ---
 
-## 👨‍💻 Author
+## 👨‍💻 Authors
 
-**Nasor Hidar** — [@NasorHidar](https://github.com/NasorHidar)
+1. **Nasor Hidar** — [@NasorHidar](https://github.com/NasorHidar)
+2. **MD. SHAHRIAR SHAKIB** — [@Shahsamsu1668](https://github.com/Shahsamsu1668)
+3. **SUHITA SRUTEE** — [@suhita-04](https://github.com/suhita-04)
 
 ---
 

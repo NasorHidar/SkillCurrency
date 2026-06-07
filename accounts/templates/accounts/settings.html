@@ -77,6 +77,7 @@
 
 <!-- HERO -->
 <div class="stg-wrap">
+{% include 'accounts/_back_button.html' %}
 <div class="stg-hero">
   <div class="stg-hero-inner">
     {% if user.avatar %}<img src="{{ user.avatar.url }}" class="stg-hero-av" alt="avatar">

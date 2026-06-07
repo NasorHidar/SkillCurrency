@@ -1,13 +1,13 @@
 {% comment %}
   Universal Back Button — Usage:
-  {% include 'accounts/_back_button.html' %}              → history.back()
+  {% include 'accounts/_back_button.html' %}              → history.back(), falls back to home
   {% include 'accounts/_back_button.html' with href='/marketplace/' %}  → explicit URL
 {% endcomment %}
 <div class="back-btn-wrap">
     {% if href %}
         <a href="{{ href }}" class="back-btn"><i class="fas fa-arrow-left"></i> Back</a>
     {% else %}
-        <button onclick="history.back()" class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
+        <button onclick="goBack()" class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
     {% endif %}
 </div>
 <style>
@@ -16,3 +16,12 @@
 .back-btn:hover{transform:translateX(-3px);box-shadow:0 6px 18px rgba(124,58,237,.45);}
 .back-btn i{font-size:.78rem;}
 </style>
+<script>
+function goBack() {
+    if (document.referrer && document.referrer !== window.location.href) {
+        history.back();
+    } else {
+        window.location.href = '/';
+    }
+}
+</script>

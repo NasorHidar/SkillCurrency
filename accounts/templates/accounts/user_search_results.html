@@ -5,6 +5,7 @@
 
 {% block content %}
 <div class="search-results-container" style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+    {% include 'accounts/_back_button.html' %}
     <h2 style="margin-bottom: 1.5rem; color: #111827;">Search Results for "<span style="color: #a855f7;">{{ query }}</span>"</h2>
 
     {% if results %}
