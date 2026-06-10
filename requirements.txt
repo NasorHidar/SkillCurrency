@@ -1,4 +1,4 @@
-﻿annotated-types==0.7.0
+annotated-types==0.7.0
 anyio==4.13.0
 asgiref==3.11.1
 attrs==26.1.0
@@ -61,3 +61,9 @@ uritemplate==4.2.0
 urllib3==2.6.3
 websockets==16.0
 zope.interface==8.3
+whitenoise>=6.8.0
+dj-database-url>=2.3.0
+psycopg2-binary>=2.9.9
+gunicorn>=23.0.0
+channels-redis>=4.2.0
+redis>=5.0.0
