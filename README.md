@@ -6,6 +6,8 @@
 
 **Bangladesh's Premier Peer-to-Peer Skill Exchange Marketplace**
 
+[🌐 Visit Live Demo](https://skillcurrency.onrender.com/)
+
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://python.org)
 [![Django](https://img.shields.io/badge/Django-6.0-0c4b33?logo=django&logoColor=white)](https://djangoproject.com)
 [![Channels](https://img.shields.io/badge/Django%20Channels-4.x-0c4b33)](https://channels.readthedocs.io)
@@ -14,7 +16,7 @@
 
 *Trade coding for design. Teach English for Python. Or simply get paid for what you know.*
 
-[Report Bug](https://github.com/NasorHidar/SkillCurrency/issues) · [Request Feature](https://github.com/NasorHidar/SkillCurrency/issues)
+[Live Demo](https://skillcurrency.onrender.com/) · [Report Bug](https://github.com/NasorHidar/SkillCurrency/issues) · [Request Feature](https://github.com/NasorHidar/SkillCurrency/issues)
 
 </div>
 
