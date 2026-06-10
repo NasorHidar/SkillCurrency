@@ -10,10 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      # Optional: In case we want to run Redis for tests, but we default to InMemoryChannelLayer for tests.
-      # So we don't strictly need a Redis service.
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
